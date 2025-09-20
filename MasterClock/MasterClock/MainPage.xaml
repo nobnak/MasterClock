@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MasterClock.MainPage">
+
+    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*, 2*">
+        <Label 
+            Grid.Row="0"
+            Grid.Column="0"
+            Text="Tick"
+            FontSize="32"
+            HorizontalOptions="Center"
+            Margin="0,40,0,20"/>
+        <Entry 
+            Grid.Row="0"
+            Grid.Column="1"
+            x:Name="Tick"
+            IsReadOnly="True"
+            Keyboard="Numeric"
+            HorizontalOptions="Center"
+            WidthRequest="200"/>
+        <Label 
+            Grid.Row="1"
+            Grid.Column="0"
+            Text="Seconds"
+            FontSize="32"
+            HorizontalOptions="Center"
+            Margin="0,40,0,20"/>
+        <Entry
+            Grid.Row="1"
+            Grid.Column="1"
+            x:Name="Seconds"
+            IsReadOnly="True"
+            Keyboard="Numeric"
+            HorizontalOptions="Center"
+            WidthRequest="200"/>
+    </Grid>
+
+</ContentPage>
