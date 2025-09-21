@@ -489,7 +489,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 429873109}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9398252392a8c5f45b945abad13f10a4, type: 3}
+  m_Script: {fileID: 11500000, guid: af2c57698edbf5d4a981bd88cec6c529, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   config:
@@ -644,6 +644,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1576042084}
   - component: {fileID: 1576042083}
+  - component: {fileID: 1576042085}
   m_Layer: 0
   m_Name: Osc
   m_TagString: Untagged
@@ -668,20 +669,8 @@ MonoBehaviour:
     OnReceive:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 2122490365}
-          m_TargetAssemblyTypeName: MasterClock, Assembly-CSharp
-          m_MethodName: ListenTick
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-        - m_Target: {fileID: 429873110}
-          m_TargetAssemblyTypeName: MasterClockStandalone, Assembly-CSharp
+        - m_Target: {fileID: 1576042085}
+          m_TargetAssemblyTypeName: MasterClockOSCAdapter, Assembly-CSharp
           m_MethodName: ListenTick
           m_Mode: 0
           m_Arguments:
@@ -716,6 +705,46 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1576042085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1576042082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8910d38fc5531d4d83adf0373d9871c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  onTickReceived:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2122490365}
+        m_TargetAssemblyTypeName: MasterClock, jp.nobnak.master_clock.Runtime
+        m_MethodName: ProcessTick
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 429873110}
+        m_TargetAssemblyTypeName: MasterClockStandalone, jp.nobnak.master_clock.Runtime
+        m_MethodName: ProcessTick
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  showDebugInfo: 0
 --- !u!1001 &1756298064
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1056,7 +1085,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2122490364}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83e821983efa6bc4caf7d73d5882cb61, type: 3}
+  m_Script: {fileID: 11500000, guid: e22012d10b65bcf48916e200a02263ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   syncDirection: 0

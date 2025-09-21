@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Mathematics;
-using StarOSC;
 using Mirror;
 
 /// <summary>
@@ -324,24 +323,6 @@ public class MasterClockCore
         }
     }
 
-    /// <summary>
-    /// OSC メッセージからtick値を受信し、時刻同期処理を実行
-    /// </summary>
-    /// <param name="data">受信したOSCデータ</param>
-    /// <param name="currentTime">現在の時刻</param>
-    /// <param name="timeSourceName">時刻ソース名（デバッグ用）</param>
-    /// <returns>処理が成功したかどうか</returns>
-    public bool ProcessOscTick(ReceivedOscArguments data, double currentTime, string timeSourceName = "Time") 
-    {
-        if (!data.TryRead(out int tick)) 
-        {
-            OnDebugLog?.Invoke("Failed to read tick from OSC message");
-            return false;
-        }
-
-        ProcessTick((uint)tick, currentTime, timeSourceName);
-        return true;
-    }
     
     /// <summary>
     /// 同期された時刻を計算

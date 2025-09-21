@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Mathematics;
-using StarOSC;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -82,21 +81,6 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
         core.Reinitialize(GetCurrentTime());
     }
 
-    /// <summary>
-    /// OSC メッセージからtick値を受信し、時刻同期処理を実行
-    /// </summary>
-    /// <param name="address">OSCメッセージのアドレス</param>
-    /// <param name="data">受信したOSCデータ</param>
-    /// <param name="_">未使用のOSC受信イベント引数</param>
-    public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
-        #if UNITY_EDITOR
-        Debug.Log($"[MasterClockStandalone] ListenTick: {address}, {data}, {_}");
-        #endif
-        
-        if (!isActiveAndEnabled) return;
-        
-        core.ProcessOscTick(data, GetCurrentTime(), "UnityTime");
-    }
     #endregion
 
     #region Query Methods

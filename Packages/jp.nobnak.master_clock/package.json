@@ -1,0 +1,34 @@
+{
+  "name": "jp.nobnak.master_clock",
+  "version": "1.0.0",
+  "displayName": "Master Clock",
+  "description": "High-precision time synchronization system for Unity supporting both standalone and networked environments. Provides EMA-based offset estimation for smooth clock synchronization.",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/nobnak/MasterClock",
+  "changelogUrl": "https://github.com/nobnak/MasterClock/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/nobnak/MasterClock/blob/main/LICENSE.md",
+  "dependencies": {
+    "com.unity.netcode.gameobjects": "1.0.0"
+  },
+  "keywords": [
+    "time",
+    "synchronization",
+    "clock",
+    "networking",
+    "precision",
+    "EMA",
+    "offset"
+  ],
+  "author": {
+    "name": "nobnak",
+    "url": "https://github.com/nobnak"
+  },
+  "type": "library",
+  "samples": [
+    {
+      "displayName": "Clock Hands Sample",
+      "description": "Example implementation showing how to use MasterClock for analog clock display",
+      "path": "Samples~/ClockHands"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 using UnityEngine;
 using Mirror;
 using Unity.Mathematics;
-using StarOSC;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -112,18 +111,6 @@ public class MasterClock : NetworkBehaviour, IMasterClock {
         ReinitializeServer();
     }
 
-    /// <summary>
-    /// OSC メッセージからtick値を受信し、時刻同期処理を実行
-    /// </summary>
-    /// <param name="address">OSCメッセージのアドレス</param>
-    /// <param name="data">受信したOSCデータ</param>
-    /// <param name="_">未使用のOSC受信イベント引数</param>
-    [ServerCallback]
-    public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
-        if (!isActiveAndEnabled) return;
-        
-        core.ProcessOscTick(data, GetCurrentTime(), "NetworkTime");
-    }
     #endregion
 
     #region Client Methods
