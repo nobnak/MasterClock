@@ -1,6 +1,7 @@
+using Rug.Osc;
 using System.Net;
 using System.Net.NetworkInformation;
-using Rug.Osc;
+using System.Net.Sockets;
 
 namespace MasterClock.Services
 {
@@ -20,9 +21,12 @@ namespace MasterClock.Services
         {
             // OSCアドレスを設定
             _oscAddress = oscAddress;
-            
+
             // OSC送信者を初期化（ブロードキャスト用）
-            _oscSender = new OscSender(IPAddress.Broadcast, port);
+            var remote = IPAddress.Broadcast;
+            var local = (remote.AddressFamily == AddressFamily.InterNetworkV6) ? IPAddress.IPv6Any : IPAddress.Any;
+            _oscSender = new OscSender(local, 0, remote, port, 8, 600, 2048);
+            _oscSender.Connect();
         }
         
         /// <summary>

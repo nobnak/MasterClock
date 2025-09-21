@@ -199,6 +199,7 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="_">未使用のOSC受信イベント引数</param>
     [ServerCallback]
     public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
+        if (!isActiveAndEnabled) return;
         if (!data.TryRead(out int tick)) {
             Debug.LogError($"[MasterClock] Failed to read tick from OSC message");
             return;
