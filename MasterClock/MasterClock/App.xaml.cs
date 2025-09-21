@@ -2,6 +2,9 @@
 {
     public partial class App : Application
     {
+        double width = 400;
+        double height = 400;
+
         public App()
         {
             InitializeComponent();
@@ -9,7 +12,10 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            var window = new Window(new AppShell());
+            window.Width = width;
+            window.Height = height;
+            return window;
         }
     }
 }
