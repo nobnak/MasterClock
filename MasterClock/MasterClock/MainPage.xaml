@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MasterClock.MainPage">
 
-    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*, 2*">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*, 2*">
         <Label 
             Grid.Row="0"
             Grid.Column="0"
@@ -34,6 +34,36 @@
             Keyboard="Numeric"
             HorizontalOptions="Center"
             WidthRequest="200"/>
+        <Label 
+            Grid.Row="2"
+            Grid.Column="0"
+            Text="Reset to Seconds"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Margin="0,20,0,10"/>
+        <Entry
+            Grid.Row="2"
+            Grid.Column="1"
+            x:Name="ResetSeconds"
+            Keyboard="Numeric"
+            HorizontalOptions="Center"
+            WidthRequest="200"
+            Placeholder="Enter seconds value"/>
+        <StackLayout
+            Grid.Row="3"
+            Grid.ColumnSpan="2"
+            Orientation="Horizontal"
+            HorizontalOptions="Center"
+            Margin="0,20,0,0">
+            <Button 
+                Text="Reset to 0"
+                Clicked="OnResetToZeroClicked"
+                Margin="0,0,10,0"/>
+            <Button 
+                Text="Reset to Seconds"
+                Clicked="OnResetClicked"
+                Margin="10,0,0,0"/>
+        </StackLayout>
     </Grid>
 
 </ContentPage>

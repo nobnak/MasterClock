@@ -10,6 +10,7 @@ namespace MasterClock.Services
         private readonly object _lockObject = new object();
         private uint _lastTick = 0;
         private bool _isRunning = false;
+        private uint _startTick = 0;  // 開始時のtick値
         
         // チェック間隔（短い間隔でtick変更をチェック）
         private const double TIMER_INTERVAL = 5.0; // 5ms
@@ -27,9 +28,9 @@ namespace MasterClock.Services
                 { 
                     if (!_isRunning) return _lastTick;
                     
-                    // Stopwatchの経過時間からtickを計算
+                    // Stopwatchの経過時間からtickを計算（開始時のtickを加算）
                     double elapsedSeconds = _stopwatch.Elapsed.TotalSeconds;
-                    return (uint)(elapsedSeconds * TICKS_PER_SECOND);
+                    return _startTick + (uint)(elapsedSeconds * TICKS_PER_SECOND);
                 } 
             } 
         }
@@ -42,8 +43,8 @@ namespace MasterClock.Services
                 { 
                     if (!_isRunning) return _lastTick / (double)TICKS_PER_SECOND;
                     
-                    // Stopwatchの経過時間を直接返す
-                    return _stopwatch.Elapsed.TotalSeconds;
+                    // Stopwatchの経過時間を直接返す（開始時の秒数を加算）
+                    return (_startTick / (double)TICKS_PER_SECOND) + _stopwatch.Elapsed.TotalSeconds;
                 } 
             } 
         }
@@ -98,6 +99,11 @@ namespace MasterClock.Services
 
         public void Reset()
         {
+            ResetFromTick(0);
+        }
+
+        public void ResetFromTick(uint startTick)
+        {
             lock (_lockObject)
             {
                 bool wasRunning = _isRunning;
@@ -108,7 +114,8 @@ namespace MasterClock.Services
                 }
                 
                 _stopwatch.Reset();
-                _lastTick = 0;
+                _startTick = startTick;
+                _lastTick = startTick;
                 
                 if (wasRunning)
                 {
@@ -116,6 +123,12 @@ namespace MasterClock.Services
                     _timer.Start();
                 }
             }
+        }
+
+        public void ResetFromSeconds(double startSeconds)
+        {
+            uint startTick = (uint)(startSeconds * TICKS_PER_SECOND);
+            ResetFromTick(startTick);
         }
 
         private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -128,10 +141,10 @@ namespace MasterClock.Services
             {
                 if (!_isRunning) return;
                 
-                // Stopwatchの経過時間からtickを計算
+                // Stopwatchの経過時間からtickを計算（開始時のtickを加算）
                 double elapsedSeconds = _stopwatch.Elapsed.TotalSeconds;
-                currentTick = (uint)(elapsedSeconds * TICKS_PER_SECOND);
-                currentSeconds = elapsedSeconds;
+                currentTick = _startTick + (uint)(elapsedSeconds * TICKS_PER_SECOND);
+                currentSeconds = (_startTick / (double)TICKS_PER_SECOND) + elapsedSeconds;
                 
                 // tickが変更された場合のみイベントを発生
                 if (currentTick != _lastTick)

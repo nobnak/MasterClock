@@ -13,54 +13,32 @@ using UnityEditor;
 [RequireComponent(typeof(NetworkIdentity))]
 [DefaultExecutionOrder(-100)]
 public class MasterClock : NetworkBehaviour {
-    [System.Serializable]
-    public class Config {
-        [Header("時刻同期設定")]
-        [SerializeField] public int tickRate = 30; // 1秒に30tick
-        [SerializeField] public int emaDuration = 10; // EMAの期間（秒）
-        
-        [Header("デバッグ情報")]
-        [SerializeField] public bool showDebugInfo = true;
-        
-        /// <summary>
-        /// 設定値を検証・修正する
-        /// </summary>
-        public void ValidateSettings() 
-            => (tickRate, emaDuration) = (math.max(1, tickRate), math.max(1, emaDuration));
-        
-        /// <summary>
-        /// 設定を文字列として出力
-        /// </summary>
-        public override string ToString() 
-            => $"TickRate: {tickRate}Hz, EMA Duration: {emaDuration}s, Debug: {showDebugInfo}";
-    }
     
-    [SerializeField] private Config config = new Config();
+    [SerializeField] private MasterClockCore.Config config = new MasterClockCore.Config();
+    internal MasterClockCore core;  // エディターからアクセスできるようにinternal
     
     /// <summary>
     /// 設定への読み取り専用アクセスを提供
     /// </summary>
-    public Config Settings => config;
+    public MasterClockCore.Config Settings => config;
     
     // SyncVarでクライアントに共有するオフセット
     [SyncVar(hook = nameof(OnOffsetChanged))]
     private double synchronizedOffset = 0.0;
-    
-    // プライベート変数
-    private uint tickCount = 0;
-    private double currentTickTime = 0.0;
-    private double lastUpdateTime = 0.0;
-    
-    // MirrorのEMA実装を使用
-    private ExponentialMovingAverage offsetEma;
 
     #region Unity Lifecycle Methods
     private void OnEnable() {
-        // 設定値を検証・修正
-        config.ValidateSettings();
+        // MasterClockCoreインスタンスを作成
+        core = new MasterClockCore(config);
+        
+        // デバッグログのコールバックを設定
+        core.OnDebugLog += (message) => Debug.Log($"[MasterClock] {message}");
+        
+        // オフセット更新コールバックを設定
+        core.OnOffsetUpdated += (offset) => synchronizedOffset = offset;
         
         if (config.showDebugInfo) {
-            Debug.Log("[MasterClock] Component enabled and settings validated");
+            Debug.Log("[MasterClock] Component enabled and core created");
         }
     }
     
@@ -68,7 +46,7 @@ public class MasterClock : NetworkBehaviour {
         base.OnStartServer();
         
         // サーバー側の初期化
-        InitializeServerSide();
+        core.Initialize(NetworkTime.predictedTime);
         
         if (config.showDebugInfo) {
             Debug.Log($"[MasterClock] Server started with config: {config}");
@@ -77,19 +55,6 @@ public class MasterClock : NetworkBehaviour {
     #endregion
 
     #region Server Methods
-    /// <summary>
-    /// サーバー側の初期化処理
-    /// </summary>
-    private void InitializeServerSide() {
-        // MirrorのEMAを初期化（期間 × tickRateでサンプル数を計算）
-        offsetEma = new ExponentialMovingAverage(config.emaDuration * config.tickRate);
-        lastUpdateTime = NetworkTime.predictedTime;
-        
-        // 初期状態をリセット
-        tickCount = 0;
-        currentTickTime = 0.0;
-        synchronizedOffset = 0.0;
-    }
     
     /// <summary>
     /// 外部からtick値を受け取り、時刻同期処理を実行
@@ -97,53 +62,21 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="tickValue">外部から入力されるtick値</param>
     [ServerCallback]
     public void ProcessTick(uint tickValue) {
-        // 受け取ったtick値を設定
-        tickCount = tickValue;
-        
-        // tickCountを秒に変換
-        currentTickTime = (double)tickCount / config.tickRate;
-        
-        // NetworkTime.predictedTimeとの差分を計算
-        double networkTime = NetworkTime.predictedTime;
-        double timeDifference = currentTickTime - networkTime;
-        
-        // MirrorのEMAでオフセットを推定
-        offsetEma.Add(timeDifference);
-        
-        // SyncVarを更新してクライアントに共有
-        synchronizedOffset = offsetEma.Value;
-        
-        // デバッグ情報を表示
-        if (config.showDebugInfo) {
-            Debug.Log($"[MasterClock] Input Tick: {tickValue}, " +
-                     $"TickTime: {currentTickTime:F4}s, " +
-                     $"NetworkTime: {networkTime:F4}s, " +
-                     $"Difference: {timeDifference:F4}s, " +
-                     $"EMA Offset: {offsetEma.Value:F4}s, " +
-                     $"EMA Variance: {offsetEma.Variance:F6}, " +
-                     $"EMA StdDev: {offsetEma.StandardDeviation:F4}s");
-        }
-        
-        lastUpdateTime = networkTime;
+        core.ProcessTick(tickValue, NetworkTime.predictedTime, "NetworkTime");
     }
     
     /// <summary>
     /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
     /// </summary>
     [ServerCallback]
-    public void ProcessCurrentTimeTick() => ProcessTick((uint)math.round(NetworkTime.predictedTime * config.tickRate));
+    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(NetworkTime.predictedTime, "NetworkTime");
     
     /// <summary>
     /// EMAオフセットをリセット
     /// </summary>
     [ServerCallback]
     public void ResetOffset() {
-        // サーバー側の状態を再初期化
-        InitializeServerSide();
-        
-        if (config.showDebugInfo) {
-            Debug.Log("[MasterClock] Server state reset and reinitialized");
-        }
+        core.ResetOffset(NetworkTime.predictedTime);
     }
     
     /// <summary>
@@ -152,14 +85,7 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="newDuration">新しいEMA期間（秒）</param>
     [ServerCallback]
     public void SetEmaDuration(int newDuration) {
-        config.emaDuration = math.max(1, newDuration);
-        
-        // 設定変更後にサーバー側を再初期化
-        InitializeServerSide();
-        
-        if (config.showDebugInfo) {
-            Debug.Log($"[MasterClock] EMA Duration changed to: {config.emaDuration} seconds - server reinitialized");
-        }
+        core.SetEmaDuration(newDuration, NetworkTime.predictedTime);
     }
     
     /// <summary>
@@ -168,14 +94,7 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="newTickRate">新しいtickRate</param>
     [ServerCallback]
     public void SetTickRate(int newTickRate) {
-        config.tickRate = math.max(1, newTickRate);
-        
-        // 設定変更後にサーバー側を再初期化
-        InitializeServerSide();
-        
-        if (config.showDebugInfo) {
-            Debug.Log($"[MasterClock] Tick Rate changed to: {config.tickRate}Hz - server reinitialized");
-        }
+        core.SetTickRate(newTickRate, NetworkTime.predictedTime);
     }
     
     /// <summary>
@@ -183,12 +102,7 @@ public class MasterClock : NetworkBehaviour {
     /// </summary>
     [ServerCallback]
     public void ReinitializeServer() {
-        config.ValidateSettings();
-        InitializeServerSide();
-        
-        if (config.showDebugInfo) {
-            Debug.Log($"[MasterClock] Server fully reinitialized with config: {config}");
-        }
+        core.Reinitialize(NetworkTime.predictedTime);
     }
 
     /// <summary>
@@ -200,12 +114,8 @@ public class MasterClock : NetworkBehaviour {
     [ServerCallback]
     public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
         if (!isActiveAndEnabled) return;
-        if (!data.TryRead(out int tick)) {
-            Debug.LogError($"[MasterClock] Failed to read tick from OSC message");
-            return;
-        }
-
-        ProcessTick((uint)tick);
+        
+        core.ProcessOscTick(data, NetworkTime.predictedTime, "NetworkTime");
     }
     #endregion
 
@@ -232,7 +142,7 @@ public class MasterClock : NetworkBehaviour {
     /// </summary>
     /// <returns>リモート同期時刻</returns>
     public double GetRemoteSynchronizedTime() => 
-        NetworkServer.active ? currentTickTime : NetworkTime.predictedTime + synchronizedOffset;
+        NetworkServer.active ? (core?.GetRemoteSynchronizedTime() ?? 0.0) : NetworkTime.predictedTime + synchronizedOffset;
     
     /// <summary>
     /// 現在のオフセット値を取得
@@ -245,13 +155,13 @@ public class MasterClock : NetworkBehaviour {
     /// </summary>
     /// <returns>EMAの値、分散、標準偏差</returns>
     public (double value, double variance, double standardDeviation) GetEmaStatistics() => 
-        NetworkServer.active ? (offsetEma.Value, offsetEma.Variance, offsetEma.StandardDeviation) : (synchronizedOffset, 0, 0);
+        NetworkServer.active ? (core?.GetEmaStatistics() ?? (synchronizedOffset, 0, 0)) : (synchronizedOffset, 0, 0);
     
     /// <summary>
     /// 最後に入力されたtick値を取得
     /// </summary>
     /// <returns>最後に入力されたtick値</returns>
-    public uint GetLastInputTick() => tickCount;
+    public uint GetLastInputTick() => NetworkServer.active ? (core?.GetLastInputTick() ?? 0) : 0;
     #endregion
 
     #region Editor
@@ -269,6 +179,13 @@ public class MasterClock : NetworkBehaviour {
             EditorGUILayout.LabelField("=== Master Clock Debug Info ===", EditorStyles.boldLabel);
             
             EditorGUILayout.LabelField($"Is Server: {NetworkServer.active}");
+            
+            // coreが初期化されているかチェック
+            if (masterClock.core == null) {
+                EditorGUILayout.LabelField("Core not initialized (component not enabled or started)");
+                return;
+            }
+            
             EditorGUILayout.LabelField($"Last Input Tick: {masterClock.GetLastInputTick()}");
             EditorGUILayout.LabelField($"Current Tick Time: {masterClock.GetRemoteSynchronizedTime():F4}s");
             EditorGUILayout.LabelField($"Network Predicted Time: {NetworkTime.predictedTime:F4}s");

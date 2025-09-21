@@ -48,5 +48,27 @@ namespace MasterClock
                 Seconds.Text = e.Seconds.ToString("F2");
             });
         }
+
+        private void OnResetClicked(object sender, EventArgs e)
+        {
+            // ResetSecondsフィールドの値を取得して、指定の時刻から再開
+            if (!string.IsNullOrWhiteSpace(ResetSeconds.Text) && double.TryParse(ResetSeconds.Text, out double resetSeconds))
+            {
+                _clockService.ResetFromSeconds(resetSeconds);
+            }
+            else
+            {
+                // 入力が空または解析に失敗した場合はエラー表示またはアラート
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    await DisplayAlert("Error", "Please enter a valid seconds value (number)", "OK");
+                });
+            }
+        }
+
+        private void OnResetToZeroClicked(object sender, EventArgs e)
+        {
+            _clockService.Reset();
+        }
     }
 }
