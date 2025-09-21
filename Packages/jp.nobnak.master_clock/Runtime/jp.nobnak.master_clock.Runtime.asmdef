@@ -2,8 +2,8 @@
     "name": "jp.nobnak.master_clock.Runtime",
     "rootNamespace": "nobnak.MasterClock",
     "references": [
-        "Mirror",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Mirror"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
