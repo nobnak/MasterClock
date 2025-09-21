@@ -14,6 +14,7 @@
     "com.unity.timeline": "1.8.9",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.7",
+    "ga.fuquna.rosettaui.uitoolkit": "1.9.2",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
@@ -53,6 +54,13 @@
       "url": "https://upm.team-lab.com",
       "scopes": [
         "com.team-lab"
+      ]
+    },
+    {
+      "name": "npm",
+      "url": "https://registry.npmjs.com",
+      "scopes": [
+        "ga.fuquna"
       ]
     }
   ]
