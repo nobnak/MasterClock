@@ -10,7 +10,7 @@ using UnityEditor;
 /// スタンドアローン版マスタークロック - 外部からtick値を受け取り、Unityの時刻と同期する
 /// </summary>
 [DefaultExecutionOrder(-100)]
-public class MasterClockStandalone : MonoBehaviour {
+public class MasterClockStandalone : MonoBehaviour, IMasterClock {
     
     [SerializeField] private MasterClockCore.Config config = new MasterClockCore.Config();
     internal MasterClockCore core;  // エディターからアクセスできるようにinternal
@@ -28,17 +28,11 @@ public class MasterClockStandalone : MonoBehaviour {
         // デバッグログのコールバックを設定
         core.OnDebugLog += (message) => Debug.Log($"[MasterClockStandalone] {message}");
         
-        if (config.showDebugInfo) {
-            Debug.Log("[MasterClockStandalone] Component enabled and core created");
-        }
-    }
-    
-    private void Start() {
         // 初期化処理
-        core.Initialize(Time.time);
+        core.Initialize(GetCurrentTime());
         
         if (config.showDebugInfo) {
-            Debug.Log($"[MasterClockStandalone] Started with config: {config}");
+            Debug.Log($"[MasterClockStandalone] Component enabled, core created and initialized with config: {config}");
         }
     }
     #endregion
@@ -50,19 +44,19 @@ public class MasterClockStandalone : MonoBehaviour {
     /// </summary>
     /// <param name="tickValue">外部から入力されるtick値</param>
     public void ProcessTick(uint tickValue) {
-        core.ProcessTick(tickValue, Time.time, "UnityTime");
+        core.ProcessTick(tickValue, GetCurrentTime(), "UnityTime");
     }
     
     /// <summary>
     /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
     /// </summary>
-    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(Time.time, "UnityTime");
+    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(GetCurrentTime(), "UnityTime");
     
     /// <summary>
     /// EMAオフセットをリセット
     /// </summary>
     public void ResetOffset() {
-        core.ResetOffset(Time.time);
+        core.ResetOffset(GetCurrentTime());
     }
     
     /// <summary>
@@ -70,7 +64,7 @@ public class MasterClockStandalone : MonoBehaviour {
     /// </summary>
     /// <param name="newDuration">新しいEMA期間（秒）</param>
     public void SetEmaDuration(int newDuration) {
-        core.SetEmaDuration(newDuration, Time.time);
+        core.SetEmaDuration(newDuration, GetCurrentTime());
     }
     
     /// <summary>
@@ -78,14 +72,14 @@ public class MasterClockStandalone : MonoBehaviour {
     /// </summary>
     /// <param name="newTickRate">新しいtickRate</param>
     public void SetTickRate(int newTickRate) {
-        core.SetTickRate(newTickRate, Time.time);
+        core.SetTickRate(newTickRate, GetCurrentTime());
     }
     
     /// <summary>
     /// 完全再初期化（設定変更時など）
     /// </summary>
     public void Reinitialize() {
-        core.Reinitialize(Time.time);
+        core.Reinitialize(GetCurrentTime());
     }
 
     /// <summary>
@@ -101,7 +95,7 @@ public class MasterClockStandalone : MonoBehaviour {
         
         if (!isActiveAndEnabled) return;
         
-        core.ProcessOscTick(data, Time.time, "UnityTime");
+        core.ProcessOscTick(data, GetCurrentTime(), "UnityTime");
     }
     #endregion
 
@@ -110,7 +104,7 @@ public class MasterClockStandalone : MonoBehaviour {
     /// 同期された時刻を取得
     /// </summary>
     /// <returns>同期された時刻</returns>
-    public double GetSynchronizedTime() => core?.GetSynchronizedTime(Time.time) ?? 0.0;
+    public double GetSynchronizedTime() => core?.GetSynchronizedTime(GetCurrentTime()) ?? 0.0;
     
     /// <summary>
     /// 同期された時刻を取得（リモート用の互換メソッド）
@@ -138,16 +132,16 @@ public class MasterClockStandalone : MonoBehaviour {
     public uint GetLastInputTick() => core?.GetLastInputTick() ?? 0;
     
     /// <summary>
-    /// 現在の Unity 時刻を取得
-    /// </summary>
-    /// <returns>Unity の Time.time</returns>
-    public double GetUnityTime() => Time.time;
-    
-    /// <summary>
     /// 最後に計算されたtick時刻を取得
     /// </summary>
     /// <returns>tick時刻</returns>
     public double GetCurrentTickTime() => core?.runtime.currentTickTime ?? 0.0;
+    
+    /// <summary>
+    /// 現在の時刻を取得（Unity Time.timeAsDouble を使用）
+    /// </summary>
+    /// <returns>現在の時刻</returns>
+    public virtual double GetCurrentTime() => Time.timeAsDouble;
     #endregion
 
     #region Editor
@@ -173,7 +167,7 @@ public class MasterClockStandalone : MonoBehaviour {
             // coreから情報を取得
             EditorGUILayout.LabelField($"Last Input Tick: {masterClock.GetLastInputTick()}");
             EditorGUILayout.LabelField($"Current Tick Time: {masterClock.GetCurrentTickTime():F4}s");
-            EditorGUILayout.LabelField($"Unity Time: {Time.time:F4}s");
+            EditorGUILayout.LabelField($"Unity Time: {masterClock.GetCurrentTime():F4}s");
             EditorGUILayout.LabelField($"Synchronized Offset: {masterClock.GetCurrentOffset():F4}s");
             EditorGUILayout.LabelField($"Synchronized Time: {masterClock.GetSynchronizedTime():F4}s");
             EditorGUILayout.LabelField($"EMA Duration: {masterClock.Settings.emaDuration} seconds");

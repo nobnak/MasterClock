@@ -4,6 +4,98 @@ using StarOSC;
 using Mirror;
 
 /// <summary>
+/// MasterClockとMasterClockStandaloneの共通インターフェイス
+/// </summary>
+public interface IMasterClock
+{
+    #region Properties
+    /// <summary>
+    /// 設定への読み取り専用アクセスを提供
+    /// </summary>
+    MasterClockCore.Config Settings { get; }
+    #endregion
+
+    #region Core Methods
+    /// <summary>
+    /// 外部からtick値を受け取り、時刻同期処理を実行
+    /// </summary>
+    /// <param name="tickValue">外部から入力されるtick値</param>
+    void ProcessTick(uint tickValue);
+
+    /// <summary>
+    /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
+    /// </summary>
+    void ProcessCurrentTimeTick();
+
+    /// <summary>
+    /// EMAオフセットをリセット
+    /// </summary>
+    void ResetOffset();
+
+    /// <summary>
+    /// EMAの期間を動的に変更
+    /// </summary>
+    /// <param name="newDuration">新しいEMA期間（秒）</param>
+    void SetEmaDuration(int newDuration);
+
+    /// <summary>
+    /// tickRateを動的に変更
+    /// </summary>
+    /// <param name="newTickRate">新しいtickRate</param>
+    void SetTickRate(int newTickRate);
+
+    /// <summary>
+    /// 完全再初期化（設定変更時など）
+    /// </summary>
+    void Reinitialize();
+    #endregion
+
+    #region Query Methods
+    /// <summary>
+    /// 同期された時刻を取得
+    /// </summary>
+    /// <returns>同期された時刻</returns>
+    double GetSynchronizedTime();
+
+    /// <summary>
+    /// 同期された時刻を取得（リモート用の互換メソッド）
+    /// </summary>
+    /// <returns>同期された時刻</returns>
+    double GetRemoteSynchronizedTime();
+
+    /// <summary>
+    /// 現在のオフセット値を取得
+    /// </summary>
+    /// <returns>推定されたオフセット値</returns>
+    double GetCurrentOffset();
+
+    /// <summary>
+    /// EMAの統計情報を取得
+    /// </summary>
+    /// <returns>EMAの値、分散、標準偏差</returns>
+    (double value, double variance, double standardDeviation) GetEmaStatistics();
+
+    /// <summary>
+    /// 最後に入力されたtick値を取得
+    /// </summary>
+    /// <returns>最後に入力されたtick値</returns>
+    uint GetLastInputTick();
+    
+    /// <summary>
+    /// 現在の時刻を取得
+    /// </summary>
+    /// <returns>現在の時刻</returns>
+    double GetCurrentTime();
+    
+    /// <summary>
+    /// 最後に計算されたtick時刻を取得
+    /// </summary>
+    /// <returns>tick時刻</returns>
+    double GetCurrentTickTime();
+    #endregion
+}
+
+/// <summary>
 /// MasterClockの共通ロジックを提供するコアクラス（MonoBehaviour非依存）
 /// </summary>
 public class MasterClockCore 

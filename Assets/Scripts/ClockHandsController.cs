@@ -31,7 +31,7 @@ public class ClockHandsController : MonoBehaviour {
     private void Start() {
         // MasterClockが指定されていない場合は自動検索
         if (masterClock == null) {
-            masterClock = FindObjectOfType<MasterClockStandalone>();
+            masterClock = FindAnyObjectByType<MasterClockStandalone>();
             if (masterClock == null) {
                 Debug.LogError("[ClockHandsController] MasterClockStandalone not found!");
                 return;

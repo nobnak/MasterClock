@@ -12,7 +12,7 @@ using UnityEditor;
 /// </summary>
 [RequireComponent(typeof(NetworkIdentity))]
 [DefaultExecutionOrder(-100)]
-public class MasterClock : NetworkBehaviour {
+public class MasterClock : NetworkBehaviour, IMasterClock {
     
     [SerializeField] private MasterClockCore.Config config = new MasterClockCore.Config();
     internal MasterClockCore core;  // エディターからアクセスできるようにinternal
@@ -46,7 +46,7 @@ public class MasterClock : NetworkBehaviour {
         base.OnStartServer();
         
         // サーバー側の初期化
-        core.Initialize(NetworkTime.predictedTime);
+        core.Initialize(GetCurrentTime());
         
         if (config.showDebugInfo) {
             Debug.Log($"[MasterClock] Server started with config: {config}");
@@ -62,21 +62,21 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="tickValue">外部から入力されるtick値</param>
     [ServerCallback]
     public void ProcessTick(uint tickValue) {
-        core.ProcessTick(tickValue, NetworkTime.predictedTime, "NetworkTime");
+        core.ProcessTick(tickValue, GetCurrentTime(), "NetworkTime");
     }
     
     /// <summary>
     /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
     /// </summary>
     [ServerCallback]
-    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(NetworkTime.predictedTime, "NetworkTime");
+    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(GetCurrentTime(), "NetworkTime");
     
     /// <summary>
     /// EMAオフセットをリセット
     /// </summary>
     [ServerCallback]
     public void ResetOffset() {
-        core.ResetOffset(NetworkTime.predictedTime);
+        core.ResetOffset(GetCurrentTime());
     }
     
     /// <summary>
@@ -85,7 +85,7 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="newDuration">新しいEMA期間（秒）</param>
     [ServerCallback]
     public void SetEmaDuration(int newDuration) {
-        core.SetEmaDuration(newDuration, NetworkTime.predictedTime);
+        core.SetEmaDuration(newDuration, GetCurrentTime());
     }
     
     /// <summary>
@@ -94,7 +94,7 @@ public class MasterClock : NetworkBehaviour {
     /// <param name="newTickRate">新しいtickRate</param>
     [ServerCallback]
     public void SetTickRate(int newTickRate) {
-        core.SetTickRate(newTickRate, NetworkTime.predictedTime);
+        core.SetTickRate(newTickRate, GetCurrentTime());
     }
     
     /// <summary>
@@ -102,7 +102,14 @@ public class MasterClock : NetworkBehaviour {
     /// </summary>
     [ServerCallback]
     public void ReinitializeServer() {
-        core.Reinitialize(NetworkTime.predictedTime);
+        core.Reinitialize(GetCurrentTime());
+    }
+
+    /// <summary>
+    /// 完全再初期化（インターフェイス実装）
+    /// </summary>
+    public void Reinitialize() {
+        ReinitializeServer();
     }
 
     /// <summary>
@@ -115,7 +122,7 @@ public class MasterClock : NetworkBehaviour {
     public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
         if (!isActiveAndEnabled) return;
         
-        core.ProcessOscTick(data, NetworkTime.predictedTime, "NetworkTime");
+        core.ProcessOscTick(data, GetCurrentTime(), "NetworkTime");
     }
     #endregion
 
@@ -135,14 +142,14 @@ public class MasterClock : NetworkBehaviour {
     /// 同期された時刻を取得（クライアント・サーバー共通）
     /// </summary>
     /// <returns>同期された時刻</returns>
-    public double GetSynchronizedTime() => NetworkTime.predictedTime + synchronizedOffset;
+    public double GetSynchronizedTime() => GetCurrentTime() + synchronizedOffset;
     
     /// <summary>
     /// リモートクライアントのための同期時刻
     /// </summary>
     /// <returns>リモート同期時刻</returns>
     public double GetRemoteSynchronizedTime() => 
-        NetworkServer.active ? (core?.GetRemoteSynchronizedTime() ?? 0.0) : NetworkTime.predictedTime + synchronizedOffset;
+        NetworkServer.active ? (core?.GetRemoteSynchronizedTime() ?? 0.0) : GetCurrentTime() + synchronizedOffset;
     
     /// <summary>
     /// 現在のオフセット値を取得
@@ -162,6 +169,18 @@ public class MasterClock : NetworkBehaviour {
     /// </summary>
     /// <returns>最後に入力されたtick値</returns>
     public uint GetLastInputTick() => NetworkServer.active ? (core?.GetLastInputTick() ?? 0) : 0;
+    
+    /// <summary>
+    /// 現在の時刻を取得（Mirror NetworkTime.predictedTime を double として返す）
+    /// </summary>
+    /// <returns>現在の時刻</returns>
+    public virtual double GetCurrentTime() => NetworkTime.predictedTime;
+    
+    /// <summary>
+    /// 最後に計算されたtick時刻を取得
+    /// </summary>
+    /// <returns>tick時刻</returns>
+    public double GetCurrentTickTime() => NetworkServer.active ? (core?.runtime.currentTickTime ?? 0.0) : 0.0;
     #endregion
 
     #region Editor
@@ -188,7 +207,7 @@ public class MasterClock : NetworkBehaviour {
             
             EditorGUILayout.LabelField($"Last Input Tick: {masterClock.GetLastInputTick()}");
             EditorGUILayout.LabelField($"Current Tick Time: {masterClock.GetRemoteSynchronizedTime():F4}s");
-            EditorGUILayout.LabelField($"Network Predicted Time: {NetworkTime.predictedTime:F4}s");
+            EditorGUILayout.LabelField($"Network Predicted Time: {masterClock.GetCurrentTime():F4}s");
             EditorGUILayout.LabelField($"Synchronized Offset: {masterClock.GetCurrentOffset():F4}s");
             EditorGUILayout.LabelField($"Synchronized Time: {masterClock.GetSynchronizedTime():F4}s");
             EditorGUILayout.LabelField($"Remote Sync Time: {masterClock.GetRemoteSynchronizedTime():F4}s");
