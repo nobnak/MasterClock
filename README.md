@@ -12,6 +12,35 @@ High-precision time synchronization system for Unity supporting both standalone 
 - **Editor Integration**: Real-time debug information in Unity Inspector
 - **Pure Package**: No external dependencies beyond Unity and Mirror
 
+## Installation
+
+### Prerequisites
+
+**Mirror Networking** is required for all functionality:
+
+1. Download **Mirror Networking** from the [Unity Asset Store](https://assetstore.unity.com/packages/tools/network/mirror-129321)
+2. Import Mirror into your project
+3. Mirror is not available as a UPM package, so Asset Store installation is required
+
+*Note: Both `MasterClock` and `MasterClockStandalone` depend on Mirror's EMA (Exponential Moving Average) library for time synchronization calculations.*
+
+### Via Package Manager (OpenUPM Registry)
+
+1. Open **Window > Package Manager** in Unity
+2. Click the **Settings** gear icon and select **Advanced Project Settings**
+3. Add a new Scoped Registry:
+   - **Name**: OpenUPM
+   - **URL**: `https://package.openupm.com`
+   - **Scope**: `jp.nobnak`
+4. Click **Save**
+5. In the Package Manager, switch to **My Registries** and install **Master Clock**
+
+### Via Git URL
+
+1. Open **Window > Package Manager** in Unity
+2. Click the **+** button and select **Add package from git URL...**
+3. Enter: `https://github.com/nobnak/MasterClock.git?path=Packages/jp.nobnak.master_clock`
+
 ## Quick Start
 
 ### Standalone Mode

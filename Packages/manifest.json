@@ -61,6 +61,13 @@
       "scopes": [
         "ga.fuquna"
       ]
+    },
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "jp.nobnak"
+      ]
     }
   ]
 }
