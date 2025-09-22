@@ -2,7 +2,8 @@
 
 High-precision time synchronization system for Unity supporting both standalone and networked environments.
 
-[![Thumbnail](http://img.youtube.com/vi/BwkbLiR88dA/sddefault.jpg)](https://youtu.be/BwkbLiR88dA)
+[![Standalone ver. demo](http://img.youtube.com/vi/BwkbLiR88dA/sddefault.jpg)](https://youtu.be/BwkbLiR88dA)
+[![MIrror ver. demo](http://img.youtube.com/vi/UguE4zgjXe0/sddefault.jpg)](https://youtu.be/UguE4zgjXe0)
 
 ## Features
 
