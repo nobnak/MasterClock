@@ -12,6 +12,7 @@ public interface IMasterClock
     /// 設定への読み取り専用アクセスを提供
     /// </summary>
     MasterClockCore.Config Settings { get; }
+    string name { get; }
     #endregion
 
     #region Core Methods
