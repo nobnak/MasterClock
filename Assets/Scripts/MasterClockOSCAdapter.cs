@@ -1,10 +1,12 @@
+using System.Collections.Concurrent;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
-using StarOSC;
 
 /// <summary>
-/// MasterClockのStarOSC統合アダプター
+/// MasterClockのOSC統合アダプター
 /// UnityEventを使用してMasterClockと疎結合
+/// バックグラウンドスレッドからのOSCメッセージをメインスレッドで安全に処理するためのディスパッチシステムを内蔵
 /// </summary>
 public class MasterClockOSCAdapter : MonoBehaviour {
     
@@ -13,52 +15,97 @@ public class MasterClockOSCAdapter : MonoBehaviour {
     
     [Header("OSC Settings")]
     [SerializeField] private bool showDebugInfo = false;
+
+    [SerializeField] private string address = "/clock/tick";
+    [SerializeField] private int port = 8000;
     
-    private void Start() {
+    // メインスレッドディスパッチ用キュー
+    private readonly ConcurrentQueue<uint> tickQueue = new ConcurrentQueue<uint>();
+    
+    #region  unity event methods
+    void OnEnable(){
         if (showDebugInfo) {
             Debug.Log("[MasterClockOSCAdapter] Initialized with UnityEvent-based tick distribution");
+        }
+
+        StartCoroutine(Receiver());
+        System.Collections.IEnumerator Receiver() {
+            yield return null;
+
+            using var recv = new Osc2.OscReceiver(port);
+            recv.Receive += (capsule) => {
+                var msg = capsule.message;
+                if (msg.path == address) {
+                    ListenTick(msg);
+                }
+            };
+            recv.Error += (e) => {
+                Debug.LogError(e);
+            };
+
+            while (isActiveAndEnabled) {
+                yield return null;
+            }
+        }       
+    }
+    
+    void Update() {
+        // メインスレッドでキューからtickを取得して処理
+        ProcessTickQueue();
+    }
+    #endregion
+    
+    /// <summary>
+    /// メインスレッドでキューに蓄積されたtick値を処理
+    /// </summary>
+    private void ProcessTickQueue() {
+        // パフォーマンスを考慮してフレームあたり最大処理数を制限
+        const int maxTicksPerFrame = 10;
+        int processedCount = 0;
+        
+        while (processedCount < maxTicksPerFrame && tickQueue.TryDequeue(out uint tick)) {
+            // メインスレッドでUnityEventを安全に呼び出し
+            onTickReceived.Invoke(tick);
+            
+            if (showDebugInfo) {
+                Debug.Log($"[MasterClockOSCAdapter] Tick {tick} processed on main thread");
+            }
+            
+            processedCount++;
         }
     }
     
     /// <summary>
-    /// OSC メッセージからtick値を受信し、UnityEventで配信
+    /// OSC メッセージからtick値を受信し、メインスレッドでの処理用にキューへ追加
+    /// このメソッドはOSCバックグラウンドスレッドから呼び出される可能性がある
     /// </summary>
-    /// <param name="address">OSCメッセージのアドレス</param>
-    /// <param name="data">受信したOSCデータ</param>
-    /// <param name="_">未使用のOSC受信イベント引数</param>
-    public void ListenTick(string address, ReceivedOscArguments data, OscReceiverEventArgs _) {
-        if (showDebugInfo) {
-            Debug.Log($"[MasterClockOSCAdapter] ListenTick: {address}, data count: {data.Remaining}");
-        }
-        
+    /// <param name="msg">受信したOSCメッセージ</param>
+    public void ListenTick(Osc2.Message msg) {        
         // OSCデータからtick値を取得
-        if (!data.TryRead(out int tick)) {
-            Debug.LogWarning("[MasterClockOSCAdapter] Failed to read tick from OSC message");
+        if (msg.data.Length < 1 || msg.data[0] is not int tick) {
+            // バックグラウンドスレッドからのDebug.LogWarningは避ける
             return;
         }
         
         if (tick < 0) {
-            Debug.LogWarning($"[MasterClockOSCAdapter] Invalid tick value: {tick}");
             return;
         }
         
-        // UnityEventでtick値を配信
-        onTickReceived.Invoke((uint)tick);
-        
-        if (showDebugInfo) {
-            Debug.Log($"[MasterClockOSCAdapter] Tick {tick} distributed via UnityEvent");
-        }
+        // メインスレッドでの処理用にキューへ追加（スレッドセーフ）
+        tickQueue.Enqueue((uint)tick);
     }
     
     /// <summary>
-    /// UnityEventに直接tick値を送信（デバッグ用）
+    /// tick値を送信（デバッグ用）
+    /// メインスレッドディスパッチシステムを通して処理される
     /// </summary>
     /// <param name="tick">送信するtick値</param>
     public void SendTick(uint tick) {
-        onTickReceived.Invoke(tick);
+        // 一貫性のためキューシステムを使用
+        tickQueue.Enqueue(tick);
         
         if (showDebugInfo) {
-            Debug.Log($"[MasterClockOSCAdapter] Manual tick {tick} sent via UnityEvent");
+            Debug.Log($"[MasterClockOSCAdapter] Manual tick {tick} queued for processing");
         }
     }
     

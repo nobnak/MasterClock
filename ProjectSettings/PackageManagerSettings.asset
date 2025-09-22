@@ -30,17 +30,6 @@ MonoBehaviour:
     m_Compliance:
       m_Status: 0
       m_Violations: []
-  - m_Id: scoped:project:team-lab
-    m_Name: team-lab
-    m_Url: https://upm.team-lab.com
-    m_Scopes:
-    - com.team-lab
-    m_IsDefault: 0
-    m_Capabilities: 0
-    m_ConfigSource: 4
-    m_Compliance:
-      m_Status: 0
-      m_Violations: []
   - m_Id: scoped:project:npm
     m_Name: npm
     m_Url: https://registry.npmjs.com

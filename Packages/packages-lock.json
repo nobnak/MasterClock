@@ -9,13 +9,6 @@
       },
       "hash": "38fecf55e4fd94ccfe58a92ed8ad1a529ba1694e"
     },
-    "com.team-lab.starosc": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://upm.team-lab.com"
-    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,
@@ -261,6 +254,13 @@
       "dependencies": {
         "com.unity.netcode.gameobjects": "1.0.0"
       }
+    },
+    "jp.nobnak.osc": {
+      "version": "3.0.6",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
