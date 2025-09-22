@@ -7,17 +7,7 @@ High-precision time synchronization system for Unity supporting both standalone 
 - Client/Server (Mirror) version.<br>
 [![MIrror ver. demo](http://img.youtube.com/vi/UguE4zgjXe0/sddefault.jpg)](https://youtu.be/UguE4zgjXe0)
 
-## Features
-
-- **Dual Mode Support**: Standalone (`MasterClockStandalone`) and networked (`MasterClock`) implementations
-- **Interface Separation**: `IMasterClockQuery` for read-only operations, `IMasterClock` for full control
-- **Query Facade**: `MasterClockQuery` component for switching between implementations dynamically
-- **EMA-based Offset Estimation**: Smooth clock synchronization using Exponential Moving Average
-- **High Precision**: Uses `Time.timeAsDouble` and `NetworkTime.predictedTime` for maximum accuracy  
-- **Editor Integration**: Real-time debug information in Unity Inspector
-- **Pure Package**: No external dependencies beyond Unity and Mirror
-
-## How It Works
+## Overview
 
 Master Clock implements a **remarkably simple** time synchronization system:
 
@@ -25,15 +15,12 @@ Master Clock implements a **remarkably simple** time synchronization system:
 2. **Master Clock** receives these ticks and calculates the time offset using EMA (Exponential Moving Average)
 3. **Synchronized Time** is provided to your application with sub-millisecond accuracy
 
-That's it! No complex NTP protocols, no elaborate handshaking - just a steady stream of 30 tick values per second over OSC.
-
-### Why This Works
-
-- **Simplicity**: Fewer moving parts mean fewer failure points
-- **Low Latency**: Direct tick-to-time conversion without protocol overhead  
-- **Network Efficient**: Minimal bandwidth usage (just uint values)
-- **Robust**: EMA smoothing handles network jitter and occasional packet loss
-- **Scalable**: One time source can synchronize unlimited Unity instances
+**Key Benefits:**
+- **Simple**: No complex NTP protocols - just 30 tick values per second over OSC
+- **Fast**: Direct tick-to-time conversion with minimal latency
+- **Robust**: EMA smoothing handles network jitter and packet loss
+- **Scalable**: One time source synchronizes unlimited Unity instances
+- **Flexible**: Dual mode support (standalone + networked) with read-only query interface
 
 ## Installation
 
@@ -156,135 +143,11 @@ Facade component for switching between clock implementations:
 - Assign `networkedClockReference` to a `MasterClock` component
 - Use `CurrentType` to switch between implementations at runtime
 
-## Advanced Usage Examples
-
-### Interface Segregation Pattern
-
-```csharp
-public class TimeDisplayUI : MonoBehaviour 
-{
-    // Accept only query interface - prevents accidental state modification
-    public void UpdateDisplay(IMasterClockQuery clockQuery) 
-    {
-        double syncTime = clockQuery.GetSynchronizedTime();
-        double offset = clockQuery.GetCurrentOffset();
-        
-        // This would cause a compile error:
-        // clockQuery.ProcessTick(123);
-    }
-}
-
-public class ClockController : MonoBehaviour 
-{
-    // Accept full interface for control operations
-    public void UpdateClock(IMasterClock clock, uint newTick) 
-    {
-        clock.ProcessTick(newTick);
-        
-        // Can also query data
-        double syncTime = clock.GetSynchronizedTime();
-    }
-}
-```
-
-### Dynamic Switching Between Implementations
-
-```csharp
-public class AdaptiveClockManager : MonoBehaviour 
-{
-    [SerializeField] private MasterClockQuery clockQuery;
-    
-    void Start() 
-    {
-        // Start with standalone mode
-        clockQuery.CurrentType = ClockType.Standalone;
-        
-        // Listen for network state changes
-        NetworkManager.singleton.OnClientConnect.AddListener(OnNetworkConnected);
-        NetworkManager.singleton.OnClientDisconnect.AddListener(OnNetworkDisconnected);
-    }
-    
-    void OnNetworkConnected() 
-    {
-        // Switch to networked mode when connected
-        clockQuery.CurrentType = ClockType.Networked;
-        Debug.Log("Switched to networked clock");
-    }
-    
-    void OnNetworkDisconnected() 
-    {
-        // Fall back to standalone mode
-        clockQuery.CurrentType = ClockType.Standalone;
-        Debug.Log("Switched to standalone clock");
-    }
-}
-```
-
 ## Dependencies
 
 - Unity 2022.3+
 - Mirror Networking (for networked mode)
 - Unity Mathematics
-
-## OSC Integration
-
-For OSC (Open Sound Control) integration, use the separate `MasterClockOSCAdapter` class located in your project's Assets folder. This adapter provides:
-
-- **Thread-Safe Processing**: Built-in main thread dispatch system for OSC messages received on background threads
-- **UnityEvent Architecture**: Loose coupling with MasterClock instances via Inspector configuration
-- **Performance Optimization**: Frame-rate limiting to prevent performance spikes from high-frequency OSC messages
-
-### Setup Instructions
-
-1. Add `MasterClockOSCAdapter` to a GameObject
-2. In the Inspector, connect the `OnTickReceived` UnityEvent to your clock's `ProcessTick(uint)` method:
-   - For direct control: Connect to `MasterClock` or `MasterClockStandalone`
-   - For facade pattern: Note that `MasterClockQuery` is read-only and doesn't expose `ProcessTick`
-3. Configure OSC message routing to call the adapter's `ListenTick()` method
-
-```csharp
-// Example: Manual tick sending (for testing)
-var oscAdapter = GetComponent<MasterClockOSCAdapter>();
-oscAdapter.SendTick(12345); // Automatically queued and processed on main thread
-
-// Example: Runtime subscription to full interface
-var masterClock = GetComponent<MasterClock>();
-oscAdapter.GetTickEvent().AddListener(masterClock.ProcessTick);
-
-// Example: Mixed setup with query facade for display
-var clockQuery = GetComponent<MasterClockQuery>();
-var displayUI = GetComponent<TimeDisplayUI>();
-// OSC messages are automatically thread-safe processed
-// UI connects to query facade for safe data access
-```
-
-### Thread-Safe Architecture
-
-The adapter implements a robust main thread dispatch system:
-
-**Background Thread Processing:**
-- OSC messages are received on background threads (OSC library behavior)
-- Messages are validated and queued using thread-safe `ConcurrentQueue<uint>`
-- No Unity API calls are made from background threads
-
-**Main Thread Processing:**
-- Queued messages are processed during Unity's `Update()` cycle
-- Maximum 10 ticks processed per frame to maintain stable performance
-- UnityEvents are safely invoked on the main thread
-
-**Benefits:**
-- **Thread Safety**: Eliminates race conditions and Unity API violations
-- **Performance Stability**: Frame-rate limiting prevents OSC message floods from causing frame drops
-- **Reliability**: Message queuing prevents tick loss during high-frequency OSC streams
-
-### UnityEvent Flexibility
-
-The adapter is completely decoupled from MasterClock implementations. You can:
-- Connect multiple MasterClock instances to one adapter
-- Use Inspector to visually configure connections
-- Easily swap MasterClock implementations
-- Add custom tick processors alongside MasterClock
-- Combine with `MasterClockQuery` for safe read-only access patterns
 
 ## License
 
