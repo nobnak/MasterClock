@@ -10,6 +10,7 @@ public class Demo : MonoBehaviour {
     public class Preset {
         public RosettaUIRoot uiBuilder;
         public MasterClockQuery clockQuery;
+        public MasterClockOSCAdapter oscAdapter;
     }
     public class Runtime {
         public Element ui;
@@ -25,6 +26,9 @@ public class Demo : MonoBehaviour {
     public Element GetUI() {
         var ui = UI.Window(name,
             UI.Column(
+                UI.Field("Osc", 
+                    () => preset.oscAdapter.gameObject.activeSelf,
+                    v => preset.oscAdapter.gameObject.SetActive(v)),
                 UI.Field("Clock Type", () => preset.clockQuery.CurrentType),
                 UI.Box(
                     UI.Label("Master Clock"),

@@ -207,7 +207,11 @@ public class AdaptiveClockManager : MonoBehaviour
 
 ## OSC Integration
 
-For OSC (Open Sound Control) integration, use the separate `MasterClockOSCAdapter` class located in your project's Assets folder. This adapter uses UnityEvent for loose coupling with MasterClock instances.
+For OSC (Open Sound Control) integration, use the separate `MasterClockOSCAdapter` class located in your project's Assets folder. This adapter provides:
+
+- **Thread-Safe Processing**: Built-in main thread dispatch system for OSC messages received on background threads
+- **UnityEvent Architecture**: Loose coupling with MasterClock instances via Inspector configuration
+- **Performance Optimization**: Frame-rate limiting to prevent performance spikes from high-frequency OSC messages
 
 ### Setup Instructions
 
@@ -220,7 +224,7 @@ For OSC (Open Sound Control) integration, use the separate `MasterClockOSCAdapte
 ```csharp
 // Example: Manual tick sending (for testing)
 var oscAdapter = GetComponent<MasterClockOSCAdapter>();
-oscAdapter.SendTick(12345);
+oscAdapter.SendTick(12345); // Automatically queued and processed on main thread
 
 // Example: Runtime subscription to full interface
 var masterClock = GetComponent<MasterClock>();
@@ -229,11 +233,30 @@ oscAdapter.GetTickEvent().AddListener(masterClock.ProcessTick);
 // Example: Mixed setup with query facade for display
 var clockQuery = GetComponent<MasterClockQuery>();
 var displayUI = GetComponent<TimeDisplayUI>();
-// OSC connects to the actual clock for operations
+// OSC messages are automatically thread-safe processed
 // UI connects to query facade for safe data access
 ```
 
-### UnityEvent Architecture
+### Thread-Safe Architecture
+
+The adapter implements a robust main thread dispatch system:
+
+**Background Thread Processing:**
+- OSC messages are received on background threads (OSC library behavior)
+- Messages are validated and queued using thread-safe `ConcurrentQueue<uint>`
+- No Unity API calls are made from background threads
+
+**Main Thread Processing:**
+- Queued messages are processed during Unity's `Update()` cycle
+- Maximum 10 ticks processed per frame to maintain stable performance
+- UnityEvents are safely invoked on the main thread
+
+**Benefits:**
+- **Thread Safety**: Eliminates race conditions and Unity API violations
+- **Performance Stability**: Frame-rate limiting prevents OSC message floods from causing frame drops
+- **Reliability**: Message queuing prevents tick loss during high-frequency OSC streams
+
+### UnityEvent Flexibility
 
 The adapter is completely decoupled from MasterClock implementations. You can:
 - Connect multiple MasterClock instances to one adapter

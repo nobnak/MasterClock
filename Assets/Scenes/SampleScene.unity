@@ -495,7 +495,7 @@ MonoBehaviour:
   config:
     tickRate: 30
     emaDuration: 1
-    showDebugInfo: 1
+    showDebugInfo: 0
 --- !u!4 &429873111
 Transform:
   m_ObjectHideFlags: 0
@@ -713,6 +713,7 @@ MonoBehaviour:
   preset:
     uiBuilder: {fileID: 1468134707}
     clockQuery: {fileID: 520039973}
+    oscAdapter: {fileID: 1576042085}
 --- !u!4 &1056681455
 Transform:
   m_ObjectHideFlags: 0
@@ -811,7 +812,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1576042084}
-  - component: {fileID: 1576042083}
   - component: {fileID: 1576042085}
   m_Layer: 0
   m_Name: Osc
@@ -819,45 +819,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1576042083
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1576042082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92d6d48218e6c09458d392e06a1dd749, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnReceives:
-  - Address: /clock/tick
-    OnReceive:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1576042085}
-          m_TargetAssemblyTypeName: MasterClockOSCAdapter, Assembly-CSharp
-          m_MethodName: ListenTick
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  OnReceiveUnhandledAddress:
-    m_PersistentCalls:
-      m_Calls: []
-  OnError:
-    m_PersistentCalls:
-      m_Calls: []
-  listenPorts: 401f0000
-  requireRemote: 0
-  mainThreadDispatcher: {fileID: 0}
+  m_IsActive: 0
 --- !u!4 &1576042084
 Transform:
   m_ObjectHideFlags: 0
@@ -913,6 +875,8 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   showDebugInfo: 0
+  address: /clock/tick
+  port: 8000
 --- !u!1001 &1756298064
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1285,7 +1249,7 @@ MonoBehaviour:
   config:
     tickRate: 30
     emaDuration: 1
-    showDebugInfo: 1
+    showDebugInfo: 0
 --- !u!114 &2122490366
 MonoBehaviour:
   m_ObjectHideFlags: 0

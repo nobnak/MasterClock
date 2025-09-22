@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using Osc2;
 
 /// <summary>
 /// MasterClockのOSC統合アダプター
@@ -21,6 +22,7 @@ public class MasterClockOSCAdapter : MonoBehaviour {
     
     // メインスレッドディスパッチ用キュー
     private readonly ConcurrentQueue<uint> tickQueue = new ConcurrentQueue<uint>();
+    private OscReceiver receiver;
     
     #region  unity event methods
     void OnEnable(){
@@ -28,30 +30,31 @@ public class MasterClockOSCAdapter : MonoBehaviour {
             Debug.Log("[MasterClockOSCAdapter] Initialized with UnityEvent-based tick distribution");
         }
 
-        StartCoroutine(Receiver());
-        System.Collections.IEnumerator Receiver() {
-            yield return null;
-
-            using var recv = new Osc2.OscReceiver(port);
-            recv.Receive += (capsule) => {
-                var msg = capsule.message;
-                if (msg.path == address) {
-                    ListenTick(msg);
-                }
-            };
-            recv.Error += (e) => {
-                Debug.LogError(e);
-            };
-
-            while (isActiveAndEnabled) {
-                yield return null;
+        receiver = new Osc2.OscReceiver(port);
+        receiver.Receive += (capsule) => {
+            var msg = capsule.message;
+            if (msg.path != address) {
+                return;
             }
-        }       
+            if (msg.data.Length < 1 || msg.data[0] is not int tick) {
+                // バックグラウンドスレッドからのDebug.LogWarningは避ける
+                return;
+            }            
+            // メインスレッドでの処理用にキューへ追加（スレッドセーフ）
+            tickQueue.Enqueue((uint)tick);
+        };
+        receiver.Error += (e) => {
+            Debug.LogError(e);
+        };
     }
     
     void Update() {
         // メインスレッドでキューからtickを取得して処理
         ProcessTickQueue();
+    }
+    void OnDisable() {
+        receiver?.Dispose();
+        receiver = null;
     }
     #endregion
     
@@ -73,26 +76,6 @@ public class MasterClockOSCAdapter : MonoBehaviour {
             
             processedCount++;
         }
-    }
-    
-    /// <summary>
-    /// OSC メッセージからtick値を受信し、メインスレッドでの処理用にキューへ追加
-    /// このメソッドはOSCバックグラウンドスレッドから呼び出される可能性がある
-    /// </summary>
-    /// <param name="msg">受信したOSCメッセージ</param>
-    public void ListenTick(Osc2.Message msg) {        
-        // OSCデータからtick値を取得
-        if (msg.data.Length < 1 || msg.data[0] is not int tick) {
-            // バックグラウンドスレッドからのDebug.LogWarningは避ける
-            return;
-        }
-        
-        if (tick < 0) {
-            return;
-        }
-        
-        // メインスレッドでの処理用にキューへ追加（スレッドセーフ）
-        tickQueue.Enqueue((uint)tick);
     }
     
     /// <summary>
