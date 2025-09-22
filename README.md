@@ -1,11 +1,6 @@
-# Master Clock Package
+# Master Clock
 
 High-precision time synchronization system for Unity supporting both standalone and networked environments.
-
-## Repository
-
-For complete documentation, examples, and source code, visit:
-**https://github.com/nobnak/MasterClock**
 
 ## Features
 
