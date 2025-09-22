@@ -12,7 +12,7 @@ public class ClockHandsController : MonoBehaviour {
     [SerializeField] private Transform milliHand;
     
     [Header("Clock Settings")]
-    [SerializeField] private MasterClockStandalone masterClock;
+    [SerializeField] private MasterClockQuery masterClock;
     [SerializeField] private bool useLocalRotation = true;
     [SerializeField] private bool invertRotation = true; // 時計回り（負の角度）
     
@@ -31,9 +31,9 @@ public class ClockHandsController : MonoBehaviour {
     private void Start() {
         // MasterClockが指定されていない場合は自動検索
         if (masterClock == null) {
-            masterClock = FindAnyObjectByType<MasterClockStandalone>();
+            masterClock = FindAnyObjectByType<MasterClockQuery>();
             if (masterClock == null) {
-                Debug.LogError("[ClockHandsController] MasterClockStandalone not found!");
+                Debug.LogError("[ClockHandsController] MasterClockQuery not found!");
                 return;
             }
         }
@@ -165,7 +165,7 @@ public class ClockHandsController : MonoBehaviour {
     /// MasterClockを動的に設定
     /// </summary>
     /// <param name="newMasterClock">新しいMasterClock</param>
-    public void SetMasterClock(MasterClockStandalone newMasterClock) {
+    public void SetMasterClock(MasterClockQuery newMasterClock) {
         masterClock = newMasterClock;
         
         if (showDebugInfo) {

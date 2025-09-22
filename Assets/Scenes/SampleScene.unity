@@ -511,6 +511,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &520039972
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 520039974}
+  - component: {fileID: 520039973}
+  m_Layer: 0
+  m_Name: Query (Master Clock)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &520039973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520039972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d180fffb569b56499796463578d0622, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clockType: 0
+  standaloneClockReference: {fileID: 429873110}
+  networkedClockReference: {fileID: 2122490365}
+--- !u!4 &520039974
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520039972}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -665,6 +712,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   preset:
     uiBuilder: {fileID: 1468134707}
+    clockQuery: {fileID: 520039973}
 --- !u!4 &1056681455
 Transform:
   m_ObjectHideFlags: 0
@@ -1024,6 +1072,7 @@ GameObject:
   - component: {fileID: 2095242931}
   - component: {fileID: 2095242930}
   - component: {fileID: 2095242929}
+  - component: {fileID: 2095242932}
   m_Layer: 0
   m_Name: Mirror
   m_TagString: Untagged
@@ -1120,6 +1169,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2095242932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095242928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a4dfcc11b4df324894bbbc6b6fafae6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  preset:
+    guiEnabled: 0
+    guiOpenKey: 110
+    uiRoot: {fileID: 1468134707}
+    features: 1
+    featureActionDelay: 3
+  tuner:
+    autoConnect: 0
+    networkAddress: localhost
+    port: 7777
 --- !u!1 &2097792026
 GameObject:
   m_ObjectHideFlags: 0
@@ -1153,7 +1224,7 @@ MonoBehaviour:
   minuteHand: {fileID: 1759082113}
   secondHand: {fileID: 1756298065}
   milliHand: {fileID: 912196424}
-  masterClock: {fileID: 429873110}
+  masterClock: {fileID: 520039973}
   useLocalRotation: 1
   invertRotation: 1
   rotationAxis: {x: 0, y: 0, z: 1}
@@ -1334,3 +1405,4 @@ SceneRoots:
   - {fileID: 429873111}
   - {fileID: 2097792028}
   - {fileID: 1056681455}
+  - {fileID: 520039974}

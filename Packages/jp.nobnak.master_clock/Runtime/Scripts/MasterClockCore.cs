@@ -3,9 +3,9 @@ using Unity.Mathematics;
 using Mirror;
 
 /// <summary>
-/// MasterClockとMasterClockStandaloneの共通インターフェイス
+/// MasterClockのクエリ専用インターフェイス（時刻取得系メソッド）
 /// </summary>
-public interface IMasterClock
+public interface IMasterClockQuery
 {
     #region Properties
     /// <summary>
@@ -13,41 +13,6 @@ public interface IMasterClock
     /// </summary>
     MasterClockCore.Config Settings { get; }
     string name { get; }
-    #endregion
-
-    #region Core Methods
-    /// <summary>
-    /// 外部からtick値を受け取り、時刻同期処理を実行
-    /// </summary>
-    /// <param name="tickValue">外部から入力されるtick値</param>
-    void ProcessTick(uint tickValue);
-
-    /// <summary>
-    /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
-    /// </summary>
-    void ProcessCurrentTimeTick();
-
-    /// <summary>
-    /// EMAオフセットをリセット
-    /// </summary>
-    void ResetOffset();
-
-    /// <summary>
-    /// EMAの期間を動的に変更
-    /// </summary>
-    /// <param name="newDuration">新しいEMA期間（秒）</param>
-    void SetEmaDuration(int newDuration);
-
-    /// <summary>
-    /// tickRateを動的に変更
-    /// </summary>
-    /// <param name="newTickRate">新しいtickRate</param>
-    void SetTickRate(int newTickRate);
-
-    /// <summary>
-    /// 完全再初期化（設定変更時など）
-    /// </summary>
-    void Reinitialize();
     #endregion
 
     #region Query Methods
@@ -92,6 +57,47 @@ public interface IMasterClock
     /// </summary>
     /// <returns>tick時刻</returns>
     double GetCurrentTickTime();
+    #endregion
+}
+
+/// <summary>
+/// MasterClockとMasterClockStandaloneの共通インターフェイス（操作系メソッド + クエリインターフェイス）
+/// </summary>
+public interface IMasterClock : IMasterClockQuery
+{
+    #region Core Methods
+    /// <summary>
+    /// 外部からtick値を受け取り、時刻同期処理を実行
+    /// </summary>
+    /// <param name="tickValue">外部から入力されるtick値</param>
+    void ProcessTick(uint tickValue);
+
+    /// <summary>
+    /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
+    /// </summary>
+    void ProcessCurrentTimeTick();
+
+    /// <summary>
+    /// EMAオフセットをリセット
+    /// </summary>
+    void ResetOffset();
+
+    /// <summary>
+    /// EMAの期間を動的に変更
+    /// </summary>
+    /// <param name="newDuration">新しいEMA期間（秒）</param>
+    void SetEmaDuration(int newDuration);
+
+    /// <summary>
+    /// tickRateを動的に変更
+    /// </summary>
+    /// <param name="newTickRate">新しいtickRate</param>
+    void SetTickRate(int newTickRate);
+
+    /// <summary>
+    /// 完全再初期化（設定変更時など）
+    /// </summary>
+    void Reinitialize();
     #endregion
 }
 
