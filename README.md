@@ -14,6 +14,24 @@ High-precision time synchronization system for Unity supporting both standalone 
 - **Editor Integration**: Real-time debug information in Unity Inspector
 - **Pure Package**: No external dependencies beyond Unity and Mirror
 
+## How It Works
+
+Master Clock implements a **remarkably simple** time synchronization system:
+
+1. **External Time Source** sends OSC packets containing tick values at **30 Hz** (30 ticks per second)
+2. **Master Clock** receives these ticks and calculates the time offset using EMA (Exponential Moving Average)
+3. **Synchronized Time** is provided to your application with sub-millisecond accuracy
+
+That's it! No complex NTP protocols, no elaborate handshaking - just a steady stream of 30 tick values per second over OSC.
+
+### Why This Works
+
+- **Simplicity**: Fewer moving parts mean fewer failure points
+- **Low Latency**: Direct tick-to-time conversion without protocol overhead  
+- **Network Efficient**: Minimal bandwidth usage (just uint values)
+- **Robust**: EMA smoothing handles network jitter and occasional packet loss
+- **Scalable**: One time source can synchronize unlimited Unity instances
+
 ## Installation
 
 ### Prerequisites
