@@ -2,6 +2,8 @@
 
 High-precision time synchronization system for Unity supporting both standalone and networked environments.
 
+[![Thumbnail](http://img.youtube.com/vi/BwkbLiR88dA/sddefault.jpg)](https://youtu.be/BwkbLiR88dA)
+
 ## Features
 
 - **Dual Mode Support**: Standalone (`MasterClockStandalone`) and networked (`MasterClock`) implementations
