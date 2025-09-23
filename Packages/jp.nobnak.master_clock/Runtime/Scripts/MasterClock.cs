@@ -1,6 +1,5 @@
 using UnityEngine;
 using Mirror;
-using Unity.Mathematics;
 
 #if UNITY_EDITOR
 using UnityEditor;

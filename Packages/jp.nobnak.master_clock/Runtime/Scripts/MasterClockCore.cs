@@ -1,6 +1,68 @@
 using UnityEngine;
 using Unity.Mathematics;
-using Mirror;
+using System;
+
+/// <summary>
+/// 独自実装の指数移動平均（Exponential Moving Average）構造体
+/// N-day EMA implementation for calculating exponential moving average
+/// https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+/// </summary>
+public struct ExponentialMovingAverage
+{
+    readonly double alpha;
+    bool initialized;
+
+    public double Value;
+    public double Variance;
+    public double StandardDeviation; // absolute value
+
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="n">EMAの期間（サンプル数）</param>
+    public ExponentialMovingAverage(int n)
+    {
+        // standard N-day EMA alpha calculation
+        alpha = 2.0 / (n + 1);
+        initialized = false;
+        Value = 0;
+        Variance = 0;
+        StandardDeviation = 0;
+    }
+
+    /// <summary>
+    /// 新しい値をEMAに追加
+    /// </summary>
+    /// <param name="newValue">追加する値</param>
+    public void Add(double newValue)
+    {
+        // simple algorithm for EMA described here:
+        // https://en.wikipedia.org/wiki/Moving_average#Exponentially_weighted_moving_variance_and_standard_deviation
+        if (initialized)
+        {
+            double delta = newValue - Value;
+            Value += alpha * delta;
+            Variance = (1 - alpha) * (Variance + alpha * delta * delta);
+            StandardDeviation = Math.Sqrt(Variance);
+        }
+        else
+        {
+            Value = newValue;
+            initialized = true;
+        }
+    }
+
+    /// <summary>
+    /// EMAの状態をリセット
+    /// </summary>
+    public void Reset()
+    {
+        initialized = false;
+        Value = 0;
+        Variance = 0;
+        StandardDeviation = 0;
+    }
+}
 
 /// <summary>
 /// MasterClockのクエリ専用インターフェイス（時刻取得系メソッド）

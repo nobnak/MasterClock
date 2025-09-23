@@ -1,6 +1,4 @@
 using UnityEngine;
-using Unity.Mathematics;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
