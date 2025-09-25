@@ -201,8 +201,8 @@ public class MasterClock : NetworkBehaviour, IMasterClock {
             
             if (NetworkServer.active) {
                 var stats = masterClock.GetEmaStatistics();
-                EditorGUILayout.LabelField($"EMA Variance: {stats.variance:F6}");
-                EditorGUILayout.LabelField($"EMA Standard Deviation: {stats.standardDeviation:F4}s");
+                EditorGUILayout.LabelField($"EMA Variance: {stats.variance * 1000000:F3}ms²");
+                EditorGUILayout.LabelField($"EMA Standard Deviation: {stats.standardDeviation * 1000:F3}ms");
                 
                 EditorGUILayout.Space();
                 EditorGUILayout.BeginHorizontal();

@@ -308,8 +308,8 @@ public class MasterClockCore
                              $"{timeSourceName}: {currentTime:F4}s, " +
                              $"Difference: {timeDifference:F4}s, " +
                              $"EMA Offset: {runtime.offsetEma.Value:F4}s, " +
-                             $"EMA Variance: {runtime.offsetEma.Variance:F6}, " +
-                             $"EMA StdDev: {runtime.offsetEma.StandardDeviation:F4}s";
+                             $"EMA Variance: {runtime.offsetEma.Variance * 1000000:F3}ms², " +
+                             $"EMA StdDev: {runtime.offsetEma.StandardDeviation * 1000:F3}ms";
                              
             OnDebugLog?.Invoke(debugMessage);
         }

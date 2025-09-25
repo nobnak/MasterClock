@@ -155,8 +155,8 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
             EditorGUILayout.LabelField($"EMA Duration: {masterClock.Settings.emaDuration} seconds");
             
             var stats = masterClock.GetEmaStatistics();
-            EditorGUILayout.LabelField($"EMA Variance: {stats.variance:F6}");
-            EditorGUILayout.LabelField($"EMA Standard Deviation: {stats.standardDeviation:F4}s");
+            EditorGUILayout.LabelField($"EMA Variance: {stats.variance * 1000000:F3}ms²");
+            EditorGUILayout.LabelField($"EMA Standard Deviation: {stats.standardDeviation * 1000:F3}ms");
             
             EditorGUILayout.Space();
             EditorGUILayout.BeginHorizontal();
