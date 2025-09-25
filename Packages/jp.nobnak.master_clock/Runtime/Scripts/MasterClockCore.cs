@@ -3,18 +3,19 @@ using Unity.Mathematics;
 using System;
 
 /// <summary>
-/// 独自実装の指数移動平均（Exponential Moving Average）構造体
+/// 独自実装の指数移動平均（Exponential Moving Average）スレッドセーフクラス
 /// N-day EMA implementation for calculating exponential moving average
 /// https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
 /// </summary>
-public struct ExponentialMovingAverage
+public class ExponentialMovingAverage
 {
+    private readonly object _lock = new object();
     readonly double alpha;
     bool initialized;
 
-    public double Value;
-    public double Variance;
-    public double StandardDeviation; // absolute value
+    public double Value { get; private set; }
+    public double Variance { get; private set; }
+    public double StandardDeviation { get; private set; } // absolute value
 
     /// <summary>
     /// コンストラクタ
@@ -36,19 +37,22 @@ public struct ExponentialMovingAverage
     /// <param name="newValue">追加する値</param>
     public void Add(double newValue)
     {
-        // simple algorithm for EMA described here:
-        // https://en.wikipedia.org/wiki/Moving_average#Exponentially_weighted_moving_variance_and_standard_deviation
-        if (initialized)
+        lock (_lock)
         {
-            double delta = newValue - Value;
-            Value += alpha * delta;
-            Variance = (1 - alpha) * (Variance + alpha * delta * delta);
-            StandardDeviation = Math.Sqrt(Variance);
-        }
-        else
-        {
-            Value = newValue;
-            initialized = true;
+            // simple algorithm for EMA described here:
+            // https://en.wikipedia.org/wiki/Moving_average#Exponentially_weighted_moving_variance_and_standard_deviation
+            if (initialized)
+            {
+                double delta = newValue - Value;
+                Value += alpha * delta;
+                Variance = (1 - alpha) * (Variance + alpha * delta * delta);
+                StandardDeviation = Math.Sqrt(Variance);
+            }
+            else
+            {
+                Value = newValue;
+                initialized = true;
+            }
         }
     }
 
@@ -57,10 +61,25 @@ public struct ExponentialMovingAverage
     /// </summary>
     public void Reset()
     {
-        initialized = false;
-        Value = 0;
-        Variance = 0;
-        StandardDeviation = 0;
+        lock (_lock)
+        {
+            initialized = false;
+            Value = 0;
+            Variance = 0;
+            StandardDeviation = 0;
+        }
+    }
+
+    /// <summary>
+    /// EMAの統計情報をスレッドセーフに取得
+    /// </summary>
+    /// <returns>値、分散、標準偏差のタプル</returns>
+    public (double value, double variance, double standardDeviation) GetStatistics()
+    {
+        lock (_lock)
+        {
+            return (Value, Variance, StandardDeviation);
+        }
     }
 }
 
@@ -164,10 +183,11 @@ public interface IMasterClock : IMasterClockQuery
 }
 
 /// <summary>
-/// MasterClockの共通ロジックを提供するコアクラス（MonoBehaviour非依存）
+/// MasterClockの共通ロジックを提供するスレッドセーフコアクラス（MonoBehaviour非依存）
 /// </summary>
 public class MasterClockCore 
 {
+    private readonly object _lock = new object();
     [System.Serializable]
     public class Config 
     {
@@ -265,14 +285,17 @@ public class MasterClockCore
     /// <param name="currentTime">現在の時刻</param>
     public void Initialize(double currentTime) 
     {
-        config.ValidateSettings();
-        
-        // ランタイム状態を初期化（期間 × tickRateでサンプル数を計算）
-        runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
-        
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            OnDebugLog?.Invoke("MasterClockCore initialized");
+            config.ValidateSettings();
+            
+            // ランタイム状態を初期化（期間 × tickRateでサンプル数を計算）
+            runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
+            
+            if (config.showDebugInfo) 
+            {
+                OnDebugLog?.Invoke("MasterClockCore initialized");
+            }
         }
     }
     
@@ -284,37 +307,41 @@ public class MasterClockCore
     /// <param name="timeSourceName">時刻ソース名（デバッグ用）</param>
     public void ProcessTick(uint tickValue, double currentTime, string timeSourceName = "Time") 
     {
-        // 受け取ったtick値を設定
-        runtime.tickCount = tickValue;
-        
-        // tickCountを秒に変換
-        runtime.currentTickTime = (double)runtime.tickCount / config.tickRate;
-        
-        // 基準時刻との差分を計算
-        double timeDifference = runtime.currentTickTime - currentTime;
-        
-        // MirrorのEMAでオフセットを推定
-        runtime.offsetEma.Add(timeDifference);
-        
-        // オフセットを更新
-        runtime.synchronizedOffset = runtime.offsetEma.Value;
-        OnOffsetUpdated?.Invoke(runtime.synchronizedOffset);
-        
-        // デバッグ情報を表示
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            var debugMessage = $"Input Tick: {tickValue}, " +
-                             $"TickTime: {runtime.currentTickTime:F4}s, " +
-                             $"{timeSourceName}: {currentTime:F4}s, " +
-                             $"Difference: {timeDifference:F4}s, " +
-                             $"EMA Offset: {runtime.offsetEma.Value:F4}s, " +
-                             $"EMA Variance: {runtime.offsetEma.Variance * 1000000:F3}ms², " +
-                             $"EMA StdDev: {runtime.offsetEma.StandardDeviation * 1000:F3}ms";
-                             
-            OnDebugLog?.Invoke(debugMessage);
+            // 受け取ったtick値を設定
+            runtime.tickCount = tickValue;
+            
+            // tickCountを秒に変換
+            runtime.currentTickTime = (double)runtime.tickCount / config.tickRate;
+            
+            // 基準時刻との差分を計算
+            double timeDifference = runtime.currentTickTime - currentTime;
+            
+            // MirrorのEMAでオフセットを推定
+            runtime.offsetEma.Add(timeDifference);
+            
+            // オフセットを更新（スレッドセーフに統計情報を取得）
+            var emaStats = runtime.offsetEma.GetStatistics();
+            runtime.synchronizedOffset = emaStats.value;
+            OnOffsetUpdated?.Invoke(runtime.synchronizedOffset);
+            
+            // デバッグ情報を表示
+            if (config.showDebugInfo) 
+            {
+                var debugMessage = $"Input Tick: {tickValue}, " +
+                                 $"TickTime: {runtime.currentTickTime:F4}s, " +
+                                 $"{timeSourceName}: {currentTime:F4}s, " +
+                                 $"Difference: {timeDifference:F4}s, " +
+                                 $"EMA Offset: {emaStats.value:F4}s, " +
+                                 $"EMA Variance: {emaStats.variance * 1000000:F3}ms², " +
+                                 $"EMA StdDev: {emaStats.standardDeviation * 1000:F3}ms";
+                                 
+                OnDebugLog?.Invoke(debugMessage);
+            }
+            
+            runtime.lastUpdateTime = currentTime;
         }
-        
-        runtime.lastUpdateTime = currentTime;
     }
     
     /// <summary>
@@ -331,13 +358,19 @@ public class MasterClockCore
     /// <param name="currentTime">現在の時刻</param>
     public void ResetOffset(double currentTime) 
     {
-        // 新しいRuntimeインスタンスを作成して再初期化
-        runtime = new Runtime();
-        Initialize(currentTime);
-        
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            OnDebugLog?.Invoke("State reset and reinitialized");
+            // 新しいRuntimeインスタンスを作成して再初期化
+            runtime = new Runtime();
+            
+            // ロック内でInitializeの処理を実行（再帰ロックを避けるため直接実行）
+            config.ValidateSettings();
+            runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
+            
+            if (config.showDebugInfo) 
+            {
+                OnDebugLog?.Invoke("State reset and reinitialized");
+            }
         }
     }
     
@@ -348,14 +381,18 @@ public class MasterClockCore
     /// <param name="currentTime">現在の時刻</param>
     public void SetEmaDuration(int newDuration, double currentTime) 
     {
-        config.emaDuration = math.max(1, newDuration);
-        
-        // 設定変更後に再初期化
-        Initialize(currentTime);
-        
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            OnDebugLog?.Invoke($"EMA Duration changed to: {config.emaDuration} seconds - reinitialized");
+            config.emaDuration = math.max(1, newDuration);
+            
+            // ロック内で初期化処理を実行
+            config.ValidateSettings();
+            runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
+            
+            if (config.showDebugInfo) 
+            {
+                OnDebugLog?.Invoke($"EMA Duration changed to: {config.emaDuration} seconds - reinitialized");
+            }
         }
     }
     
@@ -366,14 +403,18 @@ public class MasterClockCore
     /// <param name="currentTime">現在の時刻</param>
     public void SetTickRate(int newTickRate, double currentTime) 
     {
-        config.tickRate = math.max(1, newTickRate);
-        
-        // 設定変更後に再初期化
-        Initialize(currentTime);
-        
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            OnDebugLog?.Invoke($"Tick Rate changed to: {config.tickRate}Hz - reinitialized");
+            config.tickRate = math.max(1, newTickRate);
+            
+            // ロック内で初期化処理を実行
+            config.ValidateSettings();
+            runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
+            
+            if (config.showDebugInfo) 
+            {
+                OnDebugLog?.Invoke($"Tick Rate changed to: {config.tickRate}Hz - reinitialized");
+            }
         }
     }
     
@@ -383,12 +424,15 @@ public class MasterClockCore
     /// <param name="currentTime">現在の時刻</param>
     public void Reinitialize(double currentTime) 
     {
-        config.ValidateSettings();
-        Initialize(currentTime);
-        
-        if (config.showDebugInfo) 
+        lock (_lock)
         {
-            OnDebugLog?.Invoke($"Fully reinitialized with config: {config}");
+            config.ValidateSettings();
+            runtime.Initialize(config.emaDuration * config.tickRate, currentTime);
+            
+            if (config.showDebugInfo) 
+            {
+                OnDebugLog?.Invoke($"Fully reinitialized with config: {config}");
+            }
         }
     }
 
@@ -399,33 +443,58 @@ public class MasterClockCore
     /// <param name="currentTime">現在の基準時刻</param>
     /// <returns>同期された時刻</returns>
     public double GetSynchronizedTime(double currentTime) 
-        => currentTime + runtime.synchronizedOffset;
+    {
+        lock (_lock)
+        {
+            return currentTime + runtime.synchronizedOffset;
+        }
+    }
     
     /// <summary>
     /// 同期された時刻を取得（リモート用の互換メソッド）
     /// </summary>
     /// <returns>同期された時刻</returns>
     public double GetRemoteSynchronizedTime() 
-        => runtime.currentTickTime;
+    {
+        lock (_lock)
+        {
+            return runtime.currentTickTime;
+        }
+    }
     
     /// <summary>
     /// 現在のオフセット値を取得
     /// </summary>
     /// <returns>推定されたオフセット値</returns>
     public double GetCurrentOffset() 
-        => runtime.synchronizedOffset;
+    {
+        lock (_lock)
+        {
+            return runtime.synchronizedOffset;
+        }
+    }
     
     /// <summary>
     /// EMAの統計情報を取得
     /// </summary>
     /// <returns>EMAの値、分散、標準偏差</returns>
     public (double value, double variance, double standardDeviation) GetEmaStatistics() 
-        => (runtime.offsetEma.Value, runtime.offsetEma.Variance, runtime.offsetEma.StandardDeviation);
+    {
+        lock (_lock)
+        {
+            return runtime.offsetEma.GetStatistics();
+        }
+    }
     
     /// <summary>
     /// 最後に入力されたtick値を取得
     /// </summary>
     /// <returns>最後に入力されたtick値</returns>
     public uint GetLastInputTick() 
-        => runtime.tickCount;
+    {
+        lock (_lock)
+        {
+            return runtime.tickCount;
+        }
+    }
 }

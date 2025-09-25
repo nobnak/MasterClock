@@ -60,7 +60,7 @@ public class MasterClock : NetworkBehaviour, IMasterClock {
     /// <param name="tickValue">外部から入力されるtick値</param>
     [ServerCallback]
     public void ProcessTick(uint tickValue) {
-        core.ProcessTick(tickValue, GetCurrentTime(), "NetworkTime");
+        core.ProcessTick(tickValue, ThreadSafeTime.realtimeSinceStartupAsDouble, "ThreadSafeTime");
     }
     
     /// <summary>

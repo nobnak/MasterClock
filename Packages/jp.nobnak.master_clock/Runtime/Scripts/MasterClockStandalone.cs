@@ -41,13 +41,13 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
     /// </summary>
     /// <param name="tickValue">外部から入力されるtick値</param>
     public void ProcessTick(uint tickValue) {
-        core.ProcessTick(tickValue, GetCurrentTime(), "UnityTime");
+        core.ProcessTick(tickValue, ThreadSafeTime.realtimeSinceStartupAsDouble, "ThreadSafeTime");
     }
     
     /// <summary>
     /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
     /// </summary>
-    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(GetCurrentTime(), "UnityTime");
+    public void ProcessCurrentTimeTick() => core.ProcessCurrentTimeTick(ThreadSafeTime.realtimeSinceStartupAsDouble, "ThreadSafeTime");
     
     /// <summary>
     /// EMAオフセットをリセット

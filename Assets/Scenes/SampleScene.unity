@@ -861,7 +861,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 2
+        m_CallState: 1
       - m_Target: {fileID: 429873110}
         m_TargetAssemblyTypeName: MasterClockStandalone, jp.nobnak.master_clock.Runtime
         m_MethodName: ProcessTick
@@ -873,7 +873,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 2
+        m_CallState: 1
   showDebugInfo: 0
   address: /clock/tick
   port: 8000
