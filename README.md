@@ -22,17 +22,47 @@ Master Clock implements a **remarkably simple** time synchronization system:
 - **Scalable**: One time source synchronizes unlimited Unity instances
 - **Flexible**: Dual mode support (standalone + networked) with read-only query interface
 
+## New Features
+
+### ThreadSafeTime
+A thread-safe static time utility class that provides high-precision time access from any thread:
+
+```csharp
+// Access from any thread
+double currentTime = ThreadSafeTime.Now;
+double timeInMs = ThreadSafeTime.NowMilliseconds;
+
+// Check drift from Unity Time (main thread only)
+double drift = ThreadSafeTime.GetDriftFromUnityTime();
+
+// Get detailed debug information
+string debugInfo = ThreadSafeTime.GetDebugInfo();
+```
+
+**Features:**
+- **Auto-initialization**: Uses `RuntimeInitializeOnLoadMethod` for automatic startup
+- **High precision**: Based on `System.Diagnostics.Stopwatch`
+- **Unity compatible**: Provides equivalent values to `Time.realtimeSinceStartupAsDouble`
+- **Thread-safe**: Safe access from multiple threads
+- **Synchronization**: Re-sync with Unity Time when needed
+
+### Independent EMA Implementation
+Master Clock now uses its own Exponential Moving Average implementation:
+- **Mirror independent**: No longer depends on Mirror's EMA library
+- **Full compatibility**: 100% API compatible with previous version
+- **High precision**: Includes variance and standard deviation calculations
+
 ## Installation
 
 ### Prerequisites
 
-**Mirror Networking** is required for all functionality:
+**Mirror Networking** is required for networked functionality:
 
 1. Download **Mirror Networking** from the [Unity Asset Store](https://assetstore.unity.com/packages/tools/network/mirror-129321)
 2. Import Mirror into your project
 3. Mirror is not available as a UPM package, so Asset Store installation is required
 
-*Note: Both `MasterClock` and `MasterClockStandalone` depend on Mirror's EMA (Exponential Moving Average) library for time synchronization calculations.*
+*Note: Master Clock now uses its own independent EMA (Exponential Moving Average) implementation and includes a thread-safe time utility class.*
 
 ### Via Package Manager (OpenUPM Registry)
 
