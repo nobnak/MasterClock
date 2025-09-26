@@ -7,6 +7,8 @@ High-precision time synchronization system for Unity supporting both standalone 
 - Client/Server (Mirror) version.<br>
 [![MIrror ver. demo](http://img.youtube.com/vi/UguE4zgjXe0/sddefault.jpg)](https://youtu.be/UguE4zgjXe0)
 
+**Namespace**: All classes are organized under the `Nobnak.MasterClock` namespace.
+
 ## Overview
 
 Master Clock implements a **remarkably simple** time synchronization system:
@@ -28,12 +30,18 @@ Master Clock implements a **remarkably simple** time synchronization system:
 A thread-safe static time utility class that provides high-precision time access from any thread:
 
 ```csharp
+using Nobnak.MasterClock;
+
 // Access from any thread
-double currentTime = ThreadSafeTime.Now;
-double timeInMs = ThreadSafeTime.NowMilliseconds;
+double currentTime = ThreadSafeTime.realtimeSinceStartupAsDouble;
+double timeInMs = ThreadSafeTime.realtimeSinceStartupAsMilliseconds;
 
 // Check drift from Unity Time (main thread only)
 double drift = ThreadSafeTime.GetDriftFromUnityTime();
+
+// Get detailed validation information
+var validation = ThreadSafeTime.GetValidationInfo();
+var stats = ThreadSafeTime.QuickValidationTest(100);
 
 // Get detailed debug information
 string debugInfo = ThreadSafeTime.GetDebugInfo();
@@ -86,6 +94,8 @@ Master Clock now uses its own Exponential Moving Average implementation:
 ### Standalone Mode
 
 ```csharp
+using Nobnak.MasterClock;
+
 // Get MasterClockStandalone component
 var masterClock = GetComponent<MasterClockStandalone>();
 
@@ -94,13 +104,19 @@ masterClock.ProcessTick(tickValue);
 
 // Get synchronized time
 double syncTime = masterClock.GetSynchronizedTime();
+
+// Access global instance
+double globalSyncTime = MasterClock.Global?.GetSynchronizedTime() ?? 0.0;
 ```
 
 ### Networked Mode (Mirror)
 
 ```csharp
-// Get MasterClock component (requires NetworkBehaviour)
-var masterClock = GetComponent<MasterClock>();
+using Nobnak.MasterClock;
+using Mirror;
+
+// Get MasterClockNet component (requires NetworkBehaviour)
+var masterClock = GetComponent<MasterClockNet>();
 
 // Server-only operations
 if (NetworkServer.active) {
@@ -109,24 +125,26 @@ if (NetworkServer.active) {
 
 // Client & Server can query synchronized time
 double syncTime = masterClock.GetSynchronizedTime();
+
+// Access global instance
+double globalSyncTime = MasterClock.Global?.GetSynchronizedTime() ?? 0.0;
 ```
 
-### Query Facade Mode
+### Global Access Mode
 
 ```csharp
-// Get MasterClockQuery component (query-only facade)
-var clockQuery = GetComponent<MasterClockQuery>();
+using Nobnak.MasterClock;
 
-// Switch between standalone and networked implementations
-clockQuery.CurrentType = ClockType.Networked;
+// Access global MasterClock instance (auto-selected from active components)
+var globalClock = MasterClock.Global;
 
-// Query operations only (read-only interface)
-double syncTime = clockQuery.GetSynchronizedTime();
-double offset = clockQuery.GetCurrentOffset();
-var stats = clockQuery.GetEmaStatistics();
-
-// Operation methods are not available (compile-time safety)
-// clockQuery.ProcessTick(123); // ← Compile error
+if (globalClock != null) {
+    // Query operations only (read-only interface)
+    double syncTime = globalClock.GetSynchronizedTime();
+    double offset = globalClock.GetCurrentOffset();
+    var stats = globalClock.GetEmaStatistics();
+    string clockName = globalClock.name;
+}
 ```
 
 ## API Reference
@@ -162,22 +180,56 @@ Inherits from `IMasterClockQuery` and adds operation methods:
 
 ### Components
 
-#### MasterClockQuery
-Facade component for switching between clock implementations:
+#### MasterClockStandalone
+Standalone Unity MonoBehaviour component for time synchronization:
 
-**Properties:**
-- `CurrentType` - Get/set current clock type (Standalone or Networked)
+**Features:**
+- Direct Unity Time integration
+- No network dependencies
+- Automatic global instance registration
+- ThreadSafeTime integration for external tick processing
 
-**Setup:**
-- Assign `standaloneClockReference` to a `MasterClockStandalone` component
-- Assign `networkedClockReference` to a `MasterClock` component
-- Use `CurrentType` to switch between implementations at runtime
+#### MasterClockNet
+Network-enabled MonoBehaviour component using Mirror:
+
+**Features:**
+- Server-client synchronization via SyncVar
+- NetworkTime.predictedTime integration
+- Server-only tick processing with client synchronization
+- Automatic global instance registration on server
+
+#### Global Instance Access
+Both components automatically register as global instances:
+- Use `MasterClock.Global` to access the currently active clock
+- Only one global instance is active at a time
+- Provides `IMasterClockQuery` interface for read-only operations
+
+## Usage Notes
+
+### Namespace Import
+All MasterClock classes are in the `Nobnak.MasterClock` namespace:
+
+```csharp
+using Nobnak.MasterClock;
+```
+
+### Global Instance Management
+- Both `MasterClockStandalone` and `MasterClockNet` automatically register as global instances
+- Use `MasterClock.Global` to access the currently active clock from anywhere
+- Only one global instance is active at a time (last enabled component takes precedence)
+
+### Thread Safety
+- `ThreadSafeTime` provides thread-safe time access from any thread
+- Main MasterClock operations should be called from the main thread
+- Use `ThreadSafeTime.realtimeSinceStartupAsDouble` for external tick processing
 
 ## Dependencies
 
 - Unity 2022.3+
-- Mirror Networking (for networked mode)
 - Unity Mathematics
+- Mirror Networking (for MasterClockNet component only)
+
+**Note**: Mirror is only required if you use the `MasterClockNet` component. The `MasterClockStandalone` component has no external dependencies beyond Unity and Mathematics.
 
 ## License
 
