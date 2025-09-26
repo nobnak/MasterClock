@@ -9,18 +9,18 @@ using UnityEditor;
 [DefaultExecutionOrder(-100)]
 public class MasterClockStandalone : MonoBehaviour, IMasterClock {
     
-    [SerializeField] private MasterClockCore.Config config = new MasterClockCore.Config();
-    internal MasterClockCore core;  // エディターからアクセスできるようにinternal
+    [SerializeField] private MasterClock.Config config = new MasterClock.Config();
+    internal MasterClock core;  // エディターからアクセスできるようにinternal
     
     /// <summary>
     /// 設定への読み取り専用アクセスを提供
     /// </summary>
-    public MasterClockCore.Config Settings => config;
+    public MasterClock.Config Settings => config;
 
     #region Unity Lifecycle Methods
     private void OnEnable() {
-        // MasterClockCoreインスタンスを作成
-        core = new MasterClockCore(config);
+        // MasterClockインスタンスを作成
+        core = new MasterClock(config);
         
         // デバッグログのコールバックを設定
         core.OnDebugLog += (message) => Debug.Log($"[MasterClockStandalone] {message}");

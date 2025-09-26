@@ -16,7 +16,7 @@ public class MasterClockQuery : MonoBehaviour, IMasterClockQuery {
     
     [SerializeField] private ClockType clockType = ClockType.Standalone;
     [SerializeField] private MasterClockStandalone standaloneClockReference;
-    [SerializeField] private MasterClock networkedClockReference;
+    [SerializeField] private MasterClockNet networkedClockReference;
     
     /// <summary>
     /// 現在選択されているクロックのクエリインターフェース参照を取得
@@ -37,7 +37,7 @@ public class MasterClockQuery : MonoBehaviour, IMasterClockQuery {
     /// <summary>
     /// 設定への読み取り専用アクセスを提供
     /// </summary>
-    public MasterClockCore.Config Settings => CurrentClockQuery?.Settings;
+    public MasterClock.Config Settings => CurrentClockQuery?.Settings;
 
     /// <summary>
     /// 現在選択されているクロックの名前を取得

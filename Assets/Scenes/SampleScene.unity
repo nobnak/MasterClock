@@ -589,7 +589,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clockType: 0
   standaloneClockReference: {fileID: 429873110}
-  networkedClockReference: {fileID: 2122490365}
+  networkedClockReference: {fileID: 2122490368}
 --- !u!4 &520039974
 Transform:
   m_ObjectHideFlags: 0
@@ -897,8 +897,8 @@ MonoBehaviour:
   onTickReceived:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2122490365}
-        m_TargetAssemblyTypeName: MasterClock, jp.nobnak.master_clock.Runtime
+      - m_Target: {fileID: 2122490368}
+        m_TargetAssemblyTypeName: MasterClockNet, jp.nobnak.master_clock.Runtime
         m_MethodName: ProcessTick
         m_Mode: 0
         m_Arguments:
@@ -1270,7 +1270,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2122490367}
   - component: {fileID: 2122490366}
-  - component: {fileID: 2122490365}
+  - component: {fileID: 2122490368}
   m_Layer: 0
   m_Name: Master Clock (Mirror)
   m_TagString: Untagged
@@ -1278,25 +1278,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2122490365
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2122490364}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e22012d10b65bcf48916e200a02263ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  config:
-    tickRate: 30
-    emaDuration: 1
-    showDebugInfo: 0
 --- !u!114 &2122490366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1329,6 +1310,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2122490368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2122490364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e37bb18a760879f4687074afbe20b910, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  config:
+    tickRate: 30
+    emaDuration: 1
+    showDebugInfo: 1
 --- !u!1001 &3697623079379101923
 PrefabInstance:
   m_ObjectHideFlags: 0
