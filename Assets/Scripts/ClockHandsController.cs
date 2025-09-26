@@ -12,7 +12,6 @@ public class ClockHandsController : MonoBehaviour {
     [SerializeField] private Transform milliHand;
     
     [Header("Clock Settings")]
-    [SerializeField] private MasterClockQuery masterClock;
     [SerializeField] private bool useLocalRotation = true;
     [SerializeField] private bool invertRotation = true; // 時計回り（負の角度）
     
@@ -29,25 +28,17 @@ public class ClockHandsController : MonoBehaviour {
     private const float DEGREES_PER_MILLI = 0.36f;    // 1000ミリ秒で360度
     
     private void Start() {
-        // MasterClockが指定されていない場合は自動検索
-        if (masterClock == null) {
-            masterClock = FindAnyObjectByType<MasterClockQuery>();
-            if (masterClock == null) {
-                Debug.LogError("[ClockHandsController] MasterClockQuery not found!");
-                return;
-            }
-        }
-        
         if (showDebugInfo) {
-            Debug.Log($"[ClockHandsController] Initialized with MasterClock: {masterClock.name}");
+            Debug.Log($"[ClockHandsController] Initialized with Global MasterClock access");
         }
     }
     
     private void Update() {
-        if (masterClock == null) return;
+        var globalClock = MasterClock.Global;
+        if (globalClock == null) return;
         
         // MasterClockから同期された時刻を取得
-        double synchronizedTime = masterClock.GetSynchronizedTime();
+        double synchronizedTime = globalClock.GetSynchronizedTime();
         
         // 時刻を時、分、秒、ミリ秒に分解
         var timeComponents = ExtractTimeComponents(synchronizedTime);
@@ -142,15 +133,16 @@ public class ClockHandsController : MonoBehaviour {
     /// <summary>
     /// 現在の同期時刻を取得（デバッグ用）
     /// </summary>
-    public double GetCurrentSynchronizedTime() => masterClock?.GetSynchronizedTime() ?? 0.0;
+    public double GetCurrentSynchronizedTime() => MasterClock.Global?.GetSynchronizedTime() ?? 0.0;
     
     /// <summary>
     /// 各針の現在の角度を取得（デバッグ用）
     /// </summary>
     public (float hour, float minute, float second, float milli) GetCurrentAngles() {
-        if (masterClock == null) return (0, 0, 0, 0);
+        var globalClock = MasterClock.Global;
+        if (globalClock == null) return (0, 0, 0, 0);
         
-        double synchronizedTime = masterClock.GetSynchronizedTime();
+        double synchronizedTime = globalClock.GetSynchronizedTime();
         var timeComponents = ExtractTimeComponents(synchronizedTime);
         
         return (
@@ -161,15 +153,6 @@ public class ClockHandsController : MonoBehaviour {
         );
     }
     
-    /// <summary>
-    /// MasterClockを動的に設定
-    /// </summary>
-    /// <param name="newMasterClock">新しいMasterClock</param>
-    public void SetMasterClock(MasterClockQuery newMasterClock) {
-        masterClock = newMasterClock;
-        
-        if (showDebugInfo) {
-            Debug.Log($"[ClockHandsController] MasterClock changed to: {masterClock?.name ?? "null"}");
-        }
-    }
+    // MasterClock.Globalを使用するため、このメソッドは不要になりました
+    // グローバルアクセスにより自動的に最適なクロックが選択されます
 }

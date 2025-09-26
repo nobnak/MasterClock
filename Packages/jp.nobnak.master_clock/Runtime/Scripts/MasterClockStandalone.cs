@@ -16,6 +16,11 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
     /// 設定への読み取り専用アクセスを提供
     /// </summary>
     public MasterClock.Config Settings => config;
+    
+    /// <summary>
+    /// このMasterClockの名前（IMasterClockQueryインターフェイス実装）
+    /// </summary>
+    public new string name => gameObject.name;
 
     #region Unity Lifecycle Methods
     private void OnEnable() {
@@ -31,6 +36,14 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
         if (config.showDebugInfo) {
             Debug.Log($"[MasterClockStandalone] Component enabled, core created and initialized with config: {config}");
         }
+        
+        // グローバルインスタンスとして登録
+        MasterClock.SetGlobalInstance(this);
+    }
+    
+    private void OnDisable() {
+        // グローバルインスタンスをクリア
+        MasterClock.ClearGlobalInstance(this);
     }
     #endregion
 

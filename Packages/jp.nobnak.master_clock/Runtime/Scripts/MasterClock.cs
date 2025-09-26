@@ -187,6 +187,29 @@ public interface IMasterClock : IMasterClockQuery
 /// </summary>
 public class MasterClock 
 {
+    /// <summary>
+    /// グローバルアクセス用のstatic変数
+    /// </summary>
+    private static IMasterClockQuery globalInstance;
+    
+    /// <summary>
+    /// グローバルなMasterClockインスタンスを取得
+    /// </summary>
+    public static IMasterClockQuery Global => globalInstance;
+    
+    /// <summary>
+    /// グローバルインスタンスを設定（内部使用）
+    /// </summary>
+    internal static void SetGlobalInstance(IMasterClockQuery instance) => globalInstance = instance;
+    
+    /// <summary>
+    /// グローバルインスタンスをクリア（内部使用）
+    /// </summary>
+    internal static void ClearGlobalInstance(IMasterClockQuery instance) {
+        if (globalInstance == instance) {
+            globalInstance = null;
+        }
+    }
     private readonly object _lock = new object();
     [System.Serializable]
     public class Config 

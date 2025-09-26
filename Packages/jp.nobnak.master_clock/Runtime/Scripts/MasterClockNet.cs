@@ -20,6 +20,11 @@ public class MasterClockNet : NetworkBehaviour, IMasterClock {
     /// </summary>
     public MasterClock.Config Settings => config;
     
+    /// <summary>
+    /// このMasterClockの名前（IMasterClockQueryインターフェイス実装）
+    /// </summary>
+    public new string name => gameObject.name;
+    
     // SyncVarでクライアントに共有するオフセット
     [SyncVar(hook = nameof(OnOffsetChanged))]
     private double synchronizedOffset = 0.0;
@@ -38,6 +43,9 @@ public class MasterClockNet : NetworkBehaviour, IMasterClock {
         if (config.showDebugInfo) {
             Debug.Log("[MasterClockNet] Component enabled and core created");
         }
+        
+        // グローバルインスタンスとして登録
+        MasterClock.SetGlobalInstance(this);
     }
     
     public override void OnStartServer() {
@@ -49,6 +57,11 @@ public class MasterClockNet : NetworkBehaviour, IMasterClock {
         if (config.showDebugInfo) {
             Debug.Log($"[MasterClockNet] Server started with config: {config}");
         }
+    }
+    
+    private void OnDisable() {
+        // グローバルインスタンスをクリア
+        MasterClock.ClearGlobalInstance(this);
     }
     #endregion
 
