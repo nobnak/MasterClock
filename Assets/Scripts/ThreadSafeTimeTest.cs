@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Threading.Tasks;
+using System.Collections;
 
 /// <summary>
 /// ThreadSafeTimeクラスのテストと使用例を示すコンポーネント
@@ -32,11 +33,16 @@ public class ThreadSafeTimeTest : MonoBehaviour
     /// </summary>
     private void ShowTimeComparison()
     {
-        double unityTime = Time.realtimeSinceStartupAsDouble;
-        double threadSafeTime = ThreadSafeTime.realtimeSinceStartupAsDouble;
-        double drift = ThreadSafeTime.GetDriftFromUnityTime();
-
-        Debug.Log($"[ThreadSafeTimeTest] Unity: {unityTime:F6}s, ThreadSafe: {threadSafeTime:F6}s, Drift: {drift * 1000:F3}ms");
+        var validation = ThreadSafeTime.GetValidationInfo();
+        
+        if (validation.isValid)
+        {
+            Debug.Log($"[ThreadSafeTimeTest] Unity: {validation.unityTime:F6}s, ThreadSafe: {validation.threadSafeTime:F6}s, Drift: {validation.driftMilliseconds:F3}ms");
+        }
+        else
+        {
+            Debug.LogWarning($"[ThreadSafeTimeTest] Validation failed: {validation.message}");
+        }
     }
 
     /// <summary>
@@ -135,6 +141,61 @@ public class ThreadSafeTimeTest : MonoBehaviour
                   $"  Unity Time: {unityTimeMs:F2}ms ({unityTimeMs / iterations * 1000000:F2}ns per call)\n" +
                   $"  ThreadSafe Time: {threadSafeTimeMs:F2}ms ({threadSafeTimeMs / iterations * 1000000:F2}ns per call)\n" +
                   $"  Ratio: {threadSafeTimeMs / unityTimeMs:F2}x");
+    }
+
+    /// <summary>
+    /// 詳細な誤差検証情報を表示
+    /// </summary>
+    [ContextMenu("Detailed Validation Info")]
+    public void ShowDetailedValidationInfo()
+    {
+        var validation = ThreadSafeTime.GetValidationInfo();
+        Debug.Log($"[ThreadSafeTimeTest] {validation}");
+    }
+
+    /// <summary>
+    /// 即座に実行される簡単な誤差統計テスト
+    /// </summary>
+    [ContextMenu("Quick Validation Test")]
+    public void QuickValidationTest()
+    {
+        Debug.Log("[ThreadSafeTimeTest] Starting quick validation test (100 samples)...");
+        
+        var stats = ThreadSafeTime.QuickValidationTest(100);
+        
+        if (stats.sampleCount > 0)
+        {
+            Debug.Log($"[ThreadSafeTimeTest] Quick Validation Test Results:\n{stats}");
+        }
+        else
+        {
+            Debug.LogWarning("[ThreadSafeTimeTest] Quick validation test failed - no valid samples collected");
+        }
+    }
+
+    /// <summary>
+    /// 時間をかけて実行される詳細な誤差統計テスト
+    /// </summary>
+    [ContextMenu("Extended Validation Test")]
+    public void ExtendedValidationTest()
+    {
+        StartCoroutine(ThreadSafeTime.RunValidationTest(1000, 1));
+        Debug.Log("[ThreadSafeTimeTest] Extended validation test started (1000 samples, 1ms interval)...");
+    }
+
+    /// <summary>
+    /// 現在の検証状況を含むフル情報を表示
+    /// </summary>
+    [ContextMenu("Full Debug Report")]
+    public void ShowFullDebugReport()
+    {
+        Debug.Log($"[ThreadSafeTimeTest] Full Debug Report:\n{ThreadSafeTime.GetDebugInfo()}");
+        
+        var quickStats = ThreadSafeTime.QuickValidationTest(50);
+        if (quickStats.sampleCount > 0)
+        {
+            Debug.Log($"[ThreadSafeTimeTest] Quick Statistics (50 samples):\n{quickStats}");
+        }
     }
 }
 
