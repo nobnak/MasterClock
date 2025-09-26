@@ -2,16 +2,19 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using Osc2;
+using System.Diagnostics;
+using System.Collections.Concurrent;
 
 /// <summary>
 /// MasterClockのOSC統合アダプター
 /// UnityEventを使用してMasterClockと疎結合
-/// スレッドセーフなProcessTick()に対応し、OSCスレッドから直接処理を実行
+/// OSCスレッドから受信したtick/timeペアをキューに蓄積し、メインスレッドから安全にUnityEventを呼び出し
+/// スレッドセーフでないレシーバーにも対応
 /// </summary>
 public class MasterClockOSCAdapter : MonoBehaviour {
     
     [Header("Tick Event")]
-    [SerializeField] private UnityEvent<uint> onTickReceived = new UnityEvent<uint>();
+    [SerializeField] private UnityEvent<uint, double> onTickReceived = new UnityEvent<uint, double>();
     
     [Header("OSC Settings")]
     [SerializeField] private bool showDebugInfo = false;
@@ -20,11 +23,13 @@ public class MasterClockOSCAdapter : MonoBehaviour {
     [SerializeField] private int port = 8000;
     
     private OscReceiver receiver;
+    private readonly Stopwatch stopwatch = Stopwatch.StartNew();
+    private readonly ConcurrentQueue<(uint tick, double time)> tickQueue = new ConcurrentQueue<(uint tick, double time)>();
     
     #region  unity event methods
     void OnEnable(){
         if (showDebugInfo) {
-            Debug.Log("[MasterClockOSCAdapter] Initialized with direct OSC thread processing");
+            UnityEngine.Debug.Log("[MasterClockOSCAdapter] Initialized with main-thread safe processing");
         }
 
         receiver = new Osc2.OscReceiver(port);
@@ -36,15 +41,25 @@ public class MasterClockOSCAdapter : MonoBehaviour {
             if (msg.data.Length < 1 || msg.data[0] is not int tick) {
                 return;
             }            
-            // OSCスレッドから直接イベントを呼び出し（ProcessTick()はスレッドセーフ）
-            onTickReceived.Invoke((uint)tick);
+            // OSCスレッドからキューにエンキュー（メインスレッドで処理される）
+            tickQueue.Enqueue(((uint)tick, GetThreadSafeTime()));
         };
         receiver.Error += (e) => {
-            Debug.LogError(e);
+            UnityEngine.Debug.LogError(e);
         };
     }
     
-    // Update()メソッドは不要（OSCスレッドから直接処理）
+    void Update() {
+        // キューからtick/timeペアを取り出してメインスレッドでUnityEventを呼び出し
+        while (tickQueue.TryDequeue(out var tickData)) {
+            onTickReceived.Invoke(tickData.tick, tickData.time);
+            
+            if (showDebugInfo) {
+                UnityEngine.Debug.Log($"[MasterClockOSCAdapter] Processed queued tick {tickData.tick} at time {tickData.time:F3}s");
+            }
+        }
+    }
+    
     void OnDisable() {
         receiver?.Dispose();
         receiver = null;
@@ -54,15 +69,16 @@ public class MasterClockOSCAdapter : MonoBehaviour {
     
     /// <summary>
     /// tick値を送信（デバッグ用）
-    /// 直接イベントを呼び出す
+    /// キュー経由でメインスレッドから処理される
     /// </summary>
     /// <param name="tick">送信するtick値</param>
     public void SendTick(uint tick) {
-        // 直接イベントを呼び出し
-        onTickReceived.Invoke(tick);
+        double time = GetThreadSafeTime();
+        // キューにエンキュー（メインスレッドのUpdate()で処理）
+        tickQueue.Enqueue((tick, time));
         
         if (showDebugInfo) {
-            Debug.Log($"[MasterClockOSCAdapter] Manual tick {tick} processed directly");
+            UnityEngine.Debug.Log($"[MasterClockOSCAdapter] Manual tick {tick} at time {time:F3}s queued");
         }
     }
     
@@ -70,5 +86,11 @@ public class MasterClockOSCAdapter : MonoBehaviour {
     /// UnityEventへの参照を取得（動的な購読用）
     /// </summary>
     /// <returns>tick受信イベント</returns>
-    public UnityEvent<uint> GetTickEvent() => onTickReceived;
+    public UnityEvent<uint, double> GetTickEvent() => onTickReceived;
+    
+    /// <summary>
+    /// スレッドセーフなtime値を取得
+    /// </summary>
+    /// <returns>アプリケーション開始からの経過時間（秒）</returns>
+    private double GetThreadSafeTime() => stopwatch.Elapsed.TotalSeconds;
 }

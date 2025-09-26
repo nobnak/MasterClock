@@ -64,6 +64,16 @@ public class MasterClock : NetworkBehaviour, IMasterClock {
     }
     
     /// <summary>
+    /// 外部からtick値とtime値を受け取り、時刻同期処理を実行
+    /// </summary>
+    /// <param name="tickValue">外部から入力されるtick値</param>
+    /// <param name="timeValue">外部から入力されるtime値</param>
+    [ServerCallback]
+    public void ProcessTick(uint tickValue, double timeValue) {
+        core.ProcessTick(tickValue, timeValue, "ExternalTime");
+    }
+    
+    /// <summary>
     /// デバッグ用：現在の時刻から推定tick値を生成してProcessTickを呼び出す
     /// </summary>
     [ServerCallback]
