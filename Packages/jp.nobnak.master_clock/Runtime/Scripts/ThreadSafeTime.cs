@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace Nobnak.MasterClock {
+
 /// <summary>
 /// 誤差検証の詳細情報を格納する構造体
 /// </summary>
@@ -398,4 +400,6 @@ public static class ThreadSafeTime
         return new StatisticalInfo(0, 0, 0, 0, 0, 0);
     }
 }
+
+} // namespace Nobnak.MasterClock
 

@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+namespace Nobnak.MasterClock {
+
 /// <summary>
 /// スタンドアローン版マスタークロック - 外部からtick値を受け取り、Unityの時刻と同期する
 /// </summary>
@@ -203,3 +205,5 @@ public class MasterClockStandalone : MonoBehaviour, IMasterClock {
 #endif
     #endregion
 }
+
+} // namespace Nobnak.MasterClock

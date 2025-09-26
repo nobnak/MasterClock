@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections;
+using Nobnak.MasterClock;
 
 /// <summary>
 /// ThreadSafeTimeクラスのテストと使用例を示すコンポーネント

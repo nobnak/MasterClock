@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.Mathematics;
 using System;
 
+namespace Nobnak.MasterClock {
+
 /// <summary>
 /// 独自実装の指数移動平均（Exponential Moving Average）スレッドセーフクラス
 /// N-day EMA implementation for calculating exponential moving average
@@ -521,3 +523,5 @@ public class MasterClock
         }
     }
 }
+
+} // namespace Nobnak.MasterClock

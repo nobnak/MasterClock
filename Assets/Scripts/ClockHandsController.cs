@@ -1,4 +1,5 @@
 using UnityEngine;
+using Nobnak.MasterClock;
 
 /// <summary>
 /// MasterClockの同期時刻を使用して時計の針（時、分、秒、ミリ秒）を回転させるコントローラー

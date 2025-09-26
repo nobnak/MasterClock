@@ -5,6 +5,8 @@ using Mirror;
 using UnityEditor;
 #endif
 
+namespace Nobnak.MasterClock {
+
 /// <summary>
 /// 外部からtick値を受け取り、NetworkTime.predictedTimeと同期し、MirrorのEMAでオフセットを推定するマスタークロック（ネットワーク版）
 /// </summary>
@@ -253,3 +255,5 @@ public class MasterClockNet : NetworkBehaviour, IMasterClock {
 #endif
     #endregion
 }
+
+} // namespace Nobnak.MasterClock

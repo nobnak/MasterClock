@@ -1,5 +1,6 @@
 using UnityEngine;
 using RosettaUI;
+using Nobnak.MasterClock;
 
 public class Demo : MonoBehaviour {
 
