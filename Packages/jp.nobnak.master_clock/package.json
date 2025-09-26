@@ -1,6 +1,6 @@
 {
   "name": "jp.nobnak.master_clock",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "displayName": "Master Clock",
   "description": "High-precision time synchronization system for Unity supporting both standalone and networked environments. Provides EMA-based offset estimation for smooth clock synchronization.",
   "unity": "2022.3",
