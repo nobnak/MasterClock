@@ -16,13 +16,42 @@ namespace Nobnak.MasterClock {
     [DefaultExecutionOrder(-100)]
     public class MasterClockNet : NetworkBehaviour, IMasterClock {
         
+        /// <summary>
+        /// ネットワーク固有の設定（クライアント側スムーズ化など）
+        /// </summary>
+        [System.Serializable]
+        public class NetworkConfig {
+            [Header("クライアント側スムーズ化設定")]
+            [SerializeField] public float emaAlpha = 0.1f; // EMA smoothing factor
+            [SerializeField] public float updateInterval = 0.016f; // 更新間隔（秒、約60Hz）
+            
+            /// <summary>
+            /// 設定値を検証・修正する
+            /// </summary>
+            public void ValidateSettings() {
+                emaAlpha = math.clamp(emaAlpha, 0.001f, 1.0f);
+                updateInterval = math.max(0.001f, updateInterval);
+            }
+            
+            /// <summary>
+            /// 設定を文字列として出力
+            /// </summary>
+            public override string ToString() => $"EMA Alpha: {emaAlpha:F3}, Update Interval: {updateInterval:F3}s";
+        }
+        
         [SerializeField] private MasterClock.Config config = new MasterClock.Config();
+        [SerializeField] private NetworkConfig networkConfig = new NetworkConfig();
         internal MasterClock core;  // エディターからアクセスできるようにinternal
         
         /// <summary>
         /// 設定への読み取り専用アクセスを提供
         /// </summary>
         public MasterClock.Config Settings => config;
+        
+        /// <summary>
+        /// ネットワーク設定への読み取り専用アクセスを提供
+        /// </summary>
+        public NetworkConfig NetworkSettings => networkConfig;
         
         /// <summary>
         /// このMasterClockの名前（IMasterClockQueryインターフェイス実装）
@@ -36,11 +65,13 @@ namespace Nobnak.MasterClock {
         // クライアント側EMAスムーズ化のための変数
         private double smoothedOffset = 0.0;
         private Coroutine smoothingCoroutine;
-        private readonly float emaAlpha = 0.1f;  // EMA smoothing factor
-        private readonly float updateInterval = 0.016f;  // 約60Hz更新
 
         #region Unity Lifecycle Methods
         private void OnEnable() {
+            // 設定値の検証・修正
+            config.ValidateSettings();
+            networkConfig.ValidateSettings();
+            
             // MasterClockインスタンスを作成
             core = new MasterClock(config);
             
@@ -190,11 +221,11 @@ namespace Nobnak.MasterClock {
         }
         
         private IEnumerator SmoothOffsetRoutine() {
-            var wait = new WaitForSeconds(updateInterval);
+            var wait = new WaitForSeconds(networkConfig.updateInterval);
             
             while (!NetworkServer.active) {
                 // EMA: smoothed = α * target + (1-α) * smoothed
-                smoothedOffset = math.lerp(smoothedOffset, synchronizedOffset, emaAlpha);
+                smoothedOffset = math.lerp(smoothedOffset, synchronizedOffset, networkConfig.emaAlpha);
                 yield return wait;
             }
         }
@@ -283,7 +314,8 @@ namespace Nobnak.MasterClock {
                 } else {
                     EditorGUILayout.LabelField($"Raw Synchronized Offset: {masterClock.synchronizedOffset:F4}s");
                     EditorGUILayout.LabelField($"EMA Smoothed Offset: {masterClock.smoothedOffset:F4}s");
-                    EditorGUILayout.LabelField($"EMA Alpha: {masterClock.emaAlpha:F3}");
+                    EditorGUILayout.LabelField($"EMA Alpha: {masterClock.NetworkSettings.emaAlpha:F3}");
+                    EditorGUILayout.LabelField($"Update Interval: {masterClock.NetworkSettings.updateInterval:F3}s");
                 }
                 
                 EditorGUILayout.LabelField($"Effective Offset: {masterClock.GetCurrentOffset():F4}s");
